@@ -1,0 +1,187 @@
+.header {
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 5rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logoImage {
+  height: 3rem;
+  width: auto;
+}
+
+.desktopNav {
+  display: none;
+}
+
+.navLink {
+  color: #1a2b5f;
+  font-weight: 500;
+  margin: 0 1rem;
+  transition: color 0.3s;
+}
+
+.navLink:hover {
+  color: #5d6b7c;
+}
+
+.authButtons {
+  display: none;
+}
+
+.iconButton {
+  color: #1a2b5f;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.3s;
+}
+
+.iconButton:hover {
+  background-color: #f0f0f0;
+}
+
+.cartIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.outlineButton {
+  border: 1px solid #1a2b5f;
+  color: #1a2b5f;
+  background: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-left: 1rem;
+}
+
+.outlineButton:hover {
+  background-color: #1a2b5f;
+  color: white;
+}
+
+.primaryButton {
+  background-color: #1a2b5f;
+  color: white;
+  border: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-left: 1rem;
+}
+
+.primaryButton:hover {
+  background-color: #2a3b6f;
+}
+
+.menuButton {
+  color: #1a2b5f;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.menuIcon {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+.mobileMenu {
+  background-color: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+.mobileNav {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+}
+
+.mobileNavLink {
+  color: #1a2b5f;
+  font-weight: 500;
+  padding: 0.5rem 0;
+}
+
+.mobileAuthButtons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+}
+
+.mobileOutlineButton {
+  border: 1px solid #1a2b5f;
+  color: #1a2b5f;
+  background: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  width: 100%;
+}
+
+.mobileOutlineButton:hover {
+  background-color: #1a2b5f;
+  color: white;
+}
+
+.mobilePrimaryButton {
+  background-color: #1a2b5f;
+  color: white;
+  border: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+}
+
+.mobilePrimaryButton:hover {
+  background-color: #2a3b6f;
+}
+
+@media (min-width: 768px) {
+  .desktopNav {
+    display: flex;
+    align-items: center;
+  }
+
+  .authButtons {
+    display: flex;
+    align-items: center;
+  }
+
+  .menuButton {
+    display: none;
+  }
+}

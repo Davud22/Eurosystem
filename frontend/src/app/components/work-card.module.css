@@ -1,0 +1,54 @@
+.workCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.workCard:hover {
+  transform: translateY(-5px);
+}
+
+.imageContainer {
+  position: relative;
+  height: 12rem;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.content {
+  padding: 1.5rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a2b5f;
+  margin-bottom: 0.5rem;
+}
+
+.description {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  color: #1a2b5f;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.link:hover {
+  color: #5d6b7c;
+}
+
+.linkIcon {
+  margin-left: 0.5rem;
+  height: 1rem;
+  width: 1rem;
+}
