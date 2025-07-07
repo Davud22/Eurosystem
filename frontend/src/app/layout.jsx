@@ -1,23 +1,19 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
-import Navbar from "./components/navbar"
-import Footer from "./components/footer"
+import { ThemeProvider } from "./components/ThemeProvider"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "Eurosystem - Sigurnosni sistemi i elektroinstalacije",
-  description:
-    "Profesionalna rješenja za sigurnosne sisteme i elektroinstalacije. Zaštitite ono što vam je najvažnije.",
+  description: "Profesionalni sigurnosni sistemi, videonadzor i pametne elektroinstalacije",
 }
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="bs">
+    <html lang="sr" suppressHydrationWarning>
       <body className={inter.className}>
-        <Navbar />
-        {children}
-        <Footer />
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   )
