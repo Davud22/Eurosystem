@@ -19,6 +19,7 @@ export default function DodajProizvodPage() {
   })
 
   const [dragActive, setDragActive] = useState(false)
+  const [modal, setModal] = useState({ open: false, message: "" });
 
   const categories = [
     "Alarmni sistemi",
@@ -29,10 +30,36 @@ export default function DodajProizvodPage() {
     "Održavanje",
   ]
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Novi proizvod:", formData)
-    // Ovdje će biti logika za dodavanje proizvoda
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Pripremi podatke za backend
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      price: parseFloat(formData.price),
+      category: formData.category,
+      images: formData.images.map(img => img.url),
+      specifications: formData.specifications,
+      in_stock: formData.inStock,
+      featured: formData.featured,
+    };
+    try {
+      const res = await fetch("http://localhost:8000/admin/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        setModal({ open: true, message: "Greška prilikom dodavanja proizvoda!" });
+        return;
+      }
+      setModal({ open: true, message: "Uspješno dodan proizvod!" });
+      setTimeout(() => {
+        window.location.href = "/admin";
+      }, 1500);
+    } catch {
+      setModal({ open: true, message: "Greška na serveru!" });
+    }
   }
 
   const handleChange = (e) => {
@@ -118,7 +145,11 @@ export default function DodajProizvodPage() {
             <h1 className={styles.title}>Dodaj novi proizvod</h1>
             <p className={styles.subtitle}>Unesite informacije o novom proizvodu</p>
           </div>
-
+          {modal.open && (
+            <div style={{ background: "#e0ffe0", color: "#0a0", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center" }}>
+              {modal.message}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGrid}>
               {/* Osnovne informacije */}

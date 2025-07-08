@@ -9,6 +9,7 @@ from repositories import user_repository
 from fastapi import HTTPException, status
 from services.jwt_service import create_reset_token, decode_token
 import time
+import requests
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -90,3 +91,41 @@ def reset_password(session: Session, token: str, new_password: str):
     user.hashed_password = hash_password(new_password)
     user_repository.update_user(session, user)
     return True
+
+GOOGLE_TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+
+def google_login(session, id_token: str):
+    resp = requests.get(GOOGLE_TOKEN_INFO_URL, params={"id_token": id_token})
+    if resp.status_code != 200:
+        raise HTTPException(status_code=400, detail="Neispravan Google token.")
+    info = resp.json()
+    email = info.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Nedostaju podaci iz Google tokena.")
+    user = user_repository.get_by_email(session, email)
+    if not user:
+        raise HTTPException(status_code=404, detail="Nalog ne postoji, registrirajte se prvo!")
+    return user
+
+def google_register(session, id_token: str):
+    resp = requests.get(GOOGLE_TOKEN_INFO_URL, params={"id_token": id_token})
+    if resp.status_code != 200:
+        raise HTTPException(status_code=400, detail="Neispravan Google token.")
+    info = resp.json()
+    email = info.get("email")
+    first_name = info.get("given_name", "")
+    last_name = info.get("family_name", "")
+    if not email:
+        raise HTTPException(status_code=400, detail="Nedostaju podaci iz Google tokena.")
+    user = user_repository.get_by_email(session, email)
+    if user:
+        raise HTTPException(status_code=409, detail="Nalog već postoji, prijavite se!")
+    user = user_repository.create_user(
+        session,
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        phone=None,
+        password=""
+    )
+    return user

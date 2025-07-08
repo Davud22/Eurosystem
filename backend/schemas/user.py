@@ -35,3 +35,6 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[UserRole] = None 
+
+class UserGoogleLogin(BaseModel):
+    id_token: str 

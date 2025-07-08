@@ -2,9 +2,11 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 from database import engine
 from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.staticfiles import StaticFiles
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from starlette.middleware.cors import CORSMiddleware
 from controllers import auth_controller
+from controllers import product_controller
 from dotenv import load_dotenv
 import os
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
@@ -43,3 +45,5 @@ def start_application():
 
 app = start_application()
 app.include_router(auth_controller.router)
+app.include_router(product_controller.router)
+app.mount("/images", StaticFiles(directory="images"), name="images")

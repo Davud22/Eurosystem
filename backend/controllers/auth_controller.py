@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlmodel import Session
-from schemas.user import UserCreate, UserLogin, UserOut, Token
+from schemas.user import UserCreate, UserLogin, UserOut, Token, UserGoogleLogin
 from models.user import UserRole
 from services import user_service
 from services.jwt_service import create_access_token
@@ -12,6 +12,7 @@ from services.user_service import generate_reset_token, reset_password
 import os
 import time
 from collections import defaultdict
+from services.user_service import google_login, google_register
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -52,6 +53,18 @@ def login(user_in: UserLogin, session: Session = Depends(get_session)):
     user = user_service.authenticate_user(session, user_in.email, user_in.password)
     if not user:
         raise HTTPException(status_code=400, detail="Pogrešan email ili lozinka!")
+    access_token = create_access_token({"sub": user.email, "role": user.role.value})
+    return {"access_token": access_token, "token_type": "bearer", "role": user.role.value}
+
+@router.post("/google-login", response_model=Token)
+def google_login_route(data: UserGoogleLogin, session: Session = Depends(get_session)):
+    user = google_login(session, data.id_token)
+    access_token = create_access_token({"sub": user.email, "role": user.role.value})
+    return {"access_token": access_token, "token_type": "bearer", "role": user.role.value}
+
+@router.post("/google-register", response_model=Token)
+def google_register_route(data: UserGoogleLogin, session: Session = Depends(get_session)):
+    user = google_register(session, data.id_token)
     access_token = create_access_token({"sub": user.email, "role": user.role.value})
     return {"access_token": access_token, "token_type": "bearer", "role": user.role.value}
 
