@@ -6,6 +6,8 @@ import Header from "../../components/Header/Header"
 import Link from "next/link"
 import styles from "./DodajProizvod.module.css"
 
+const BACKEND_URL = "http://localhost:8000";
+
 export default function DodajProizvodPage() {
   const [formData, setFormData] = useState({
     name: "",
@@ -19,6 +21,7 @@ export default function DodajProizvodPage() {
   })
 
   const [dragActive, setDragActive] = useState(false)
+  const [modal, setModal] = useState({ open: false, message: "" });
 
   const categories = [
     "Alarmni sistemi",
@@ -29,10 +32,40 @@ export default function DodajProizvodPage() {
     "Održavanje",
   ]
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log("Novi proizvod:", formData)
-    // Ovdje će biti logika za dodavanje proizvoda
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Pripremi podatke za backend
+    const priceValue = formData.price.replace(',', '.');
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      price: parseFloat(priceValue),
+      category: formData.category,
+      images: formData.images.map(img => img.url),
+      specifications: formData.specifications,
+      in_stock: formData.inStock,
+      featured: formData.featured,
+    };
+    try {
+      const res = await fetch(`${BACKEND_URL}/admin/products`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        setModal({ open: true, message: "Greška prilikom dodavanja proizvoda!" });
+        setTimeout(() => setModal({ open: false, message: "" }), 3000);
+        return;
+      }
+      setModal({ open: true, message: "Uspješno dodan proizvod!" });
+      setTimeout(() => {
+        setModal({ open: false, message: "" });
+        window.location.href = "/admin";
+      }, 1500);
+    } catch {
+      setModal({ open: true, message: "Greška na serveru!" });
+      setTimeout(() => setModal({ open: false, message: "" }), 3000);
+    }
   }
 
   const handleChange = (e) => {
@@ -63,17 +96,26 @@ export default function DodajProizvodPage() {
     }
   }
 
-  const handleFiles = (files) => {
-    const newImages = Array.from(files).map((file) => ({
-      file,
-      url: URL.createObjectURL(file),
-      name: file.name,
-    }))
-
+  const handleFiles = async (files) => {
+    const uploaded = [];
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch(`${BACKEND_URL}/admin/products/images`, {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.url) {
+          uploaded.push({ url: data.url, name: file.name });
+        }
+      } catch {}
+    }
     setFormData((prev) => ({
       ...prev,
-      images: [...prev.images, ...newImages],
-    }))
+      images: [...prev.images, ...uploaded],
+    }));
   }
 
   const removeImage = (index) => {
@@ -118,7 +160,11 @@ export default function DodajProizvodPage() {
             <h1 className={styles.title}>Dodaj novi proizvod</h1>
             <p className={styles.subtitle}>Unesite informacije o novom proizvodu</p>
           </div>
-
+          {modal.open && (
+            <div style={{ background: "#e0ffe0", color: "#0a0", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center", fontWeight: 500 }}>
+              {modal.message}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGrid}>
               {/* Osnovne informacije */}
@@ -160,19 +206,20 @@ export default function DodajProizvodPage() {
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
                     <label htmlFor="price" className={styles.label}>
-                      Cijena (RSD) *
+                      Cijena (KM) *
                     </label>
                     <input
                       type="number"
                       id="price"
                       name="price"
                       value={formData.price}
-                      onChange={handleChange}
+                      onChange={e => setFormData(prev => ({ ...prev, price: e.target.value }))}
                       required
                       className={styles.input}
-                      placeholder="0"
+                      placeholder="0.00"
                       min="0"
-                      step="100"
+                      step="0.01"
+                      inputMode="decimal"
                     />
                   </div>
 
@@ -251,7 +298,7 @@ export default function DodajProizvodPage() {
                   <div className={styles.imageGrid}>
                     {formData.images.map((image, index) => (
                       <div key={index} className={styles.imagePreview}>
-                        <img src={image.url || "/placeholder.svg"} alt={image.name} className={styles.previewImage} />
+                        <img src={image.url.startsWith('/images/') ? `http://localhost:8000${image.url}` : image.url} alt={image.name} className={styles.previewImage} />
                         <button type="button" onClick={() => removeImage(index)} className={styles.removeImage}>
                           <X size={16} />
                         </button>
@@ -300,10 +347,10 @@ export default function DodajProizvodPage() {
             </div>
 
             <div className={styles.formActions}>
-              <Link href="/admin" className={styles.cancelButton}>
+              <Link href="/admin" className={styles.cancelButton} style={{ minWidth: 110, textAlign: "center" }}>
                 Otkaži
               </Link>
-              <button type="submit" className={styles.submitButton}>
+              <button type="submit" className={styles.submitButton} style={{ minWidth: 140 }}>
                 Dodaj proizvod
               </button>
             </div>

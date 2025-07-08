@@ -435,3 +435,182 @@
 .sendEmailButton:hover {
   background-color: #15803d;
 }
+
+.productsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+.productCard {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  background: var(--bg-primary);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 0.7rem 1.1rem;
+  transition: box-shadow 0.2s;
+  border: 1px solid var(--border-primary);
+}
+.productCard:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.productImage {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 0.4rem;
+  background: #f3f4f6;
+  border: 1px solid #eee;
+}
+.productInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  min-width: 0;
+}
+.productInfo h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.productInfo p {
+  color: var(--text-secondary);
+  font-size: 0.93rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+.productPrice {
+  font-weight: 700;
+  color: var(--accent-primary);
+  font-size: 1.05rem;
+  min-width: 70px;
+}
+.editButton, .deleteButton {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.93rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.editButton {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.editButton:hover {
+  background: #6366f1;
+  color: #fff;
+}
+.deleteButton {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.deleteButton:hover {
+  background: #ef4444;
+  color: #fff;
+}
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.22);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modalContent {
+  background: var(--bg-primary);
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 2rem 2.5rem;
+  min-width: 320px;
+  max-width: 95vw;
+  animation: popIn 0.2s;
+  color: var(--text-primary);
+}
+@keyframes popIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.logoutButton {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.75rem 0;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.logoutButton:hover {
+  background: #ef4444;
+  color: #fff;
+}
+.submitButton {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.submitButton:hover {
+  background: #3730a3;
+}
+.cancelButton {
+  background: #f3f4f6;
+  color: #222;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.cancelButton:hover {
+  background: #e5e7eb;
+  color: #111;
+}
+.deleteButton {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.deleteButton:hover {
+  background: #ef4444;
+  color: #fff;
+}
