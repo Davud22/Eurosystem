@@ -11,16 +11,16 @@ os.makedirs(IMAGES_DIR, exist_ok=True)
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
-# Upload slike i vraća relativni path
-
-def save_image(file: UploadFile) -> str:
+# Async upload slike i vraća relativni path
+async def save_image(file: UploadFile) -> str:
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=400, detail="Nepodržan format slike.")
     ext = file.filename.split(".")[-1]
     filename = f"{uuid4().hex}.{ext}"
     path = os.path.join(IMAGES_DIR, filename)
+    content = await file.read()
     with open(path, "wb") as f:
-        f.write(file.file.read())
+        f.write(content)
     return f"/images/{filename}"
 
 # Dodavanje proizvoda

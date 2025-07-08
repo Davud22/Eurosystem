@@ -16,10 +16,27 @@ def create_product(product_in: ProductCreate, session: Session = Depends(get_ses
     return add_product(session, product_in.dict())
 
 @router.post("/images")
-def upload_image(file: UploadFile = File(...)):
-    url = save_image(file)
+async def upload_image(file: UploadFile = File(...)):
+    url = await save_image(file)
     return {"url": url}
 
 @router.get("/", response_model=list[ProductOut])
 def list_all_products(session: Session = Depends(get_session)):
-    return product_repository.list_products(session) 
+    return product_repository.list_products(session)
+
+@router.delete("/{product_id}")
+def delete_product(product_id: int, session: Session = Depends(get_session)):
+    product_repository.delete_product(session, product_id)
+    return {"msg": "Proizvod obrisan."}
+
+@router.put("/{product_id}", response_model=ProductOut)
+def update_product(product_id: int, product_in: ProductCreate, session: Session = Depends(get_session)):
+    product = product_repository.get_product(session, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Proizvod ne postoji.")
+    for field, value in product_in.dict().items():
+        setattr(product, field, value)
+    session.add(product)
+    session.commit()
+    session.refresh(product)
+    return product 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Users,
   Package,
@@ -98,30 +98,108 @@ export default function AdminDashboard() {
     });
   }
 
+  // Proizvodi state
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [modal, setModal] = useState({ open: false, message: "", type: "success" });
+  const [deleteId, setDeleteId] = useState(null);
+  const [editProduct, setEditProduct] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const BACKEND_URL = "http://localhost:8000";
+  // Dohvati proizvode
+  useEffect(() => {
+    if (activeTab === "products") {
+      setLoadingProducts(true);
+      fetch(`${BACKEND_URL}/admin/products`)
+        .then(res => res.json())
+        .then(data => setProducts(data))
+        .catch(() => setProducts([]))
+        .finally(() => setLoadingProducts(false));
+    }
+  }, [activeTab]);
+  // Modal za uspjeh/grešku automatski nestaje
+  useEffect(() => {
+    if (modal.open) {
+      const timeout = setTimeout(() => setModal({ ...modal, open: false }), 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [modal.open]);
+  // Brisanje proizvoda
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/admin/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setModal({ open: true, message: "Proizvod uspješno obrisan!", type: "success" });
+      setProducts(products.filter(p => p.id !== id));
+      setDeleteId(null);
+    } catch {
+      setModal({ open: true, message: "Greška pri brisanju!", type: "error" });
+    }
+  };
+  // Uređivanje proizvoda
+  const handleEditSave = async (updated) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/admin/products/${updated.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: updated.name,
+          description: updated.description,
+          price: parseFloat(updated.price),
+          category: updated.category,
+          images: updated.images,
+          specifications: updated.specifications,
+          in_stock: updated.in_stock,
+          featured: updated.featured,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setModal({ open: true, message: "Proizvod uspješno ažuriran!", type: "success" });
+      setEditModalOpen(false);
+      // Osvježi listu
+      fetch(`${BACKEND_URL}/admin/products`)
+        .then(res => res.json())
+        .then(data => setProducts(data));
+    } catch {
+      setModal({ open: true, message: "Greška pri ažuriranju!", type: "error" });
+    }
+  };
+  const categories = [
+    "Alarmni sistemi",
+    "Videonadzor",
+    "Pametne instalacije",
+    "Kućni sistemi",
+    "Poslovni sistemi",
+    "Održavanje",
+  ];
+  // Modal za uređivanje proizvoda
+  function EditProductModal({ product, onSave, onClose }) {
+    const [form, setForm] = useState({ ...product });
+    return (
+      <div className={styles.modalOverlay}>
+        <div className={styles.modalContent}>
+          <h2 style={{ marginBottom: 16 }}>Uredi proizvod</h2>
+          <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className={styles.input} />
+          <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className={styles.textarea} />
+          <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: e.target.value }))} className={styles.input} />
+          <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={styles.input}>
+            <option value="">Izaberite kategoriju</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+          <div style={{ display: "flex", gap: 8, margin: "16px 0 0 0" }}>
+            <button onClick={() => onSave({ ...form, id: product.id })} className={styles.submitButton}>Spremi</button>
+            <button onClick={onClose} className={styles.cancelButton}>Otkaži</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.admin}>
       <Header />
-
-      <button
-        onClick={logout}
-        style={{
-          position: 'fixed',
-          bottom: 40,
-          right: 40,
-          zIndex: 9999,
-          padding: '16px 32px',
-          background: '#ff3333',
-          color: '#fff',
-          border: '2px solid #222',
-          borderRadius: 12,
-          fontWeight: 'bold',
-          fontSize: 22,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
-          cursor: 'pointer'
-        }}
-      >
-        Odjava
-      </button>
 
       <div className={styles.container}>
         <div className={styles.sidebar}>
@@ -191,6 +269,14 @@ export default function AdminDashboard() {
             >
               <Mail size={20} />
               Email
+            </button>
+            {/* Dugme Odjava ispod Email */}
+            <button
+              onClick={logout}
+              className={styles.logoutButton}
+              style={{ marginTop: 24 }}
+            >
+              Odjava
             </button>
           </nav>
         </div>
@@ -333,17 +419,57 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === "products" && (
-            <div className={styles.productsSection}>
-              <div className={styles.sectionHeader}>
-                <h1 className={styles.pageTitle}>Upravljanje proizvodima</h1>
-                <button className={styles.addButton}>
-                  <Package size={20} />
+            <div>
+              <h2 className={styles.sectionTitle}>Proizvodi</h2>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+                <a href="/admin/dodaj-proizvod" className={styles.addButton} style={{ minWidth: 160, textAlign: "center" }}>
                   Dodaj proizvod
-                </button>
+                </a>
               </div>
-              <p className={styles.emptyState}>
-                Ovdje će biti lista proizvoda sa opcijama za dodavanje, uređivanje i brisanje.
-              </p>
+              {modal.open && (
+                <div style={{ background: modal.type === "success" ? "#d1fae5" : "#fee2e2", color: modal.type === "success" ? "#047857" : "#b91c1c", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center", fontWeight: 500 }}>{modal.message}</div>
+              )}
+              {loadingProducts ? (
+                <div>Učitavanje...</div>
+              ) : (
+                <div className={styles.productsGrid}>
+                  {products.map(product => (
+                    <div key={product.id} className={styles.productCard}>
+                      <img
+                        src={product.images && product.images.length > 0 ? `${BACKEND_URL}${product.images[0]}` : "/placeholder.svg"}
+                        alt={product.name}
+                        className={styles.productImage}
+                        style={{ border: "2px solid #ddd", background: "#fff" }}
+                      />
+                      <div className={styles.productInfo}>
+                        <h3>{product.name}</h3>
+                        <p>{product.description}</p>
+                        <div className={styles.productPrice}>{product.price} KM</div>
+                        <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+                          <button onClick={() => { setEditProduct(product); setEditModalOpen(true); }} className={styles.editButton}>Edit</button>
+                          <button onClick={() => setDeleteId(product.id)} className={styles.deleteButton}>Delete</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Modal za potvrdu brisanja */}
+              {deleteId && (
+                <div className={styles.modalOverlay}>
+                  <div className={styles.modalContent}>
+                    <h3>Jeste li sigurni da želite obrisati ovaj proizvod?</h3>
+                    <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                      <button onClick={() => handleDelete(deleteId)} className={styles.deleteButton}>Obriši</button>
+                      <button onClick={() => setDeleteId(null)} className={styles.cancelButton}>Otkaži</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Modal za uređivanje proizvoda */}
+              {editModalOpen && editProduct && (
+                <EditProductModal product={editProduct} onSave={handleEditSave} onClose={() => setEditModalOpen(false)} />
+              )}
             </div>
           )}
 
