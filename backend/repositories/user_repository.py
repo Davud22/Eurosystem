@@ -10,4 +10,10 @@ def create_user(session: Session, user: User) -> User:
     session.add(user)
     session.commit()
     session.refresh(user)
+    return user
+
+def update_user(session: Session, user: User) -> User:
+    session.add(user)
+    session.commit()
+    session.refresh(user)
     return user 

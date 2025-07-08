@@ -47,9 +47,37 @@ export default function UserDashboard() {
     },
   ]
 
+  function logout() {
+    localStorage.removeItem("access_token");
+    fetch("/api/logout").then(() => {
+      window.location.replace("/prijava");
+    });
+  }
+
   return (
     <div className={styles.userDashboard}>
       <Header />
+
+      <button
+        onClick={logout}
+        style={{
+          position: 'fixed',
+          bottom: 40,
+          right: 40,
+          zIndex: 9999,
+          padding: '16px 32px',
+          background: '#ff3333',
+          color: '#fff',
+          border: '2px solid #222',
+          borderRadius: 12,
+          fontWeight: 'bold',
+          fontSize: 22,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+          cursor: 'pointer'
+        }}
+      >
+        Odjava
+      </button>
 
       <div className={styles.container}>
         <div className={styles.sidebar}>

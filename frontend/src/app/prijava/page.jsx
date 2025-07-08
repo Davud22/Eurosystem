@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import Header from "../components/Header/Header"
 import Footer from "../components/Footer/Footer"
@@ -9,6 +9,15 @@ import styles from "./Prijava.module.css"
 import { jwtDecode } from "jwt-decode"
 
 export default function PrijavaPage() {
+  useEffect(() => {
+    document.cookie = "access_token=; Max-Age=0; path=/;";
+    localStorage.removeItem("access_token");
+    // Popuni email iz localStorage ako postoji
+    const savedEmail = localStorage.getItem("remembered_email");
+    if (savedEmail) {
+      setFormData((prev) => ({ ...prev, email: savedEmail, rememberMe: true }));
+    }
+  }, []);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -22,6 +31,12 @@ export default function PrijavaPage() {
     e.preventDefault()
     setIsLoading(true)
     setModal({ open: false, message: "" })
+    // Pamti email ako je rememberMe označen
+    if (formData.rememberMe) {
+      localStorage.setItem("remembered_email", formData.email);
+    } else {
+      localStorage.removeItem("remembered_email");
+    }
     try {
       const res = await fetch("http://localhost:8000/auth/login", {
         method: "POST",
@@ -39,6 +54,7 @@ export default function PrijavaPage() {
       }
       const data = await res.json()
       localStorage.setItem("access_token", data.access_token)
+      document.cookie = `access_token=${data.access_token}; path=/;`;
       const decoded = jwtDecode(data.access_token)
       if (decoded.role === "admin") {
         window.location.href = "/admin"
@@ -64,6 +80,28 @@ export default function PrijavaPage() {
     console.log("Google prijava")
     // Ovdje će biti Google OAuth logika
   }
+
+  const handleForgotPassword = async () => {
+    if (!formData.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email)) {
+      setModal({ open: true, message: "Unesite ispravan email za reset lozinke." });
+      return;
+    }
+    setIsLoading(true);
+    setModal({ open: false, message: "" });
+    try {
+      const res = await fetch("http://localhost:8000/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const data = await res.json();
+      setModal({ open: true, message: data.msg });
+    } catch {
+      setModal({ open: true, message: "Greška na serveru!" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
@@ -136,9 +174,9 @@ export default function PrijavaPage() {
                     />
                     <span className={styles.checkboxText}>Zapamti me</span>
                   </label>
-                  <Link href="/zaboravljena-lozinka" className={styles.forgotLink}>
+                  <button type="button" onClick={handleForgotPassword} className={styles.forgotLink} disabled={isLoading}>
                     Zaboravili ste lozinku?
-                  </Link>
+                  </button>
                 </div>
                 <button
                   type="submit"
