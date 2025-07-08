@@ -6,6 +6,7 @@ import Header from "../components/Header/Header"
 import Footer from "../components/Footer/Footer"
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react"
 import styles from "./Prijava.module.css"
+import { jwtDecode } from "jwt-decode"
 
 export default function PrijavaPage() {
   const [formData, setFormData] = useState({
@@ -15,17 +16,40 @@ export default function PrijavaPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [modal, setModal] = useState({ open: false, message: "" })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-
-    // Simulacija API poziva
-    setTimeout(() => {
-      console.log("Prijava:", formData)
+    setModal({ open: false, message: "" })
+    try {
+      const res = await fetch("http://localhost:8000/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setModal({ open: true, message: data.detail || "Pogrešan email ili lozinka!" })
+        setIsLoading(false)
+        return
+      }
+      const data = await res.json()
+      localStorage.setItem("access_token", data.access_token)
+      const decoded = jwtDecode(data.access_token)
+      if (decoded.role === "admin") {
+        window.location.href = "/admin"
+      } else {
+        window.location.href = "/user"
+      }
+    } catch (err) {
+      setModal({ open: true, message: "Greška na serveru!" })
+    } finally {
       setIsLoading(false)
-      // Ovdje će biti logika za prijavu
-    }, 2000)
+    }
   }
 
   const handleChange = (e) => {
@@ -44,7 +68,6 @@ export default function PrijavaPage() {
   return (
     <div className={styles.page}>
       <Header />
-
       <main className={styles.main}>
         <div className={styles.container}>
           <div className={styles.formContainer}>
@@ -52,8 +75,12 @@ export default function PrijavaPage() {
               <h1 className={styles.title}>Dobrodošli nazad</h1>
               <p className={styles.subtitle}>Prijavite se na vaš Eurosystem nalog</p>
             </div>
-
             <div className={styles.authCard}>
+              {modal.open && (
+                <div style={{ background: "#fee", color: "#b00", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center" }}>
+                  {modal.message}
+                </div>
+              )}
               <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formGroup}>
                   <label htmlFor="email" className={styles.label}>
@@ -73,7 +100,6 @@ export default function PrijavaPage() {
                     />
                   </div>
                 </div>
-
                 <div className={styles.formGroup}>
                   <label htmlFor="password" className={styles.label}>
                     Lozinka
@@ -99,7 +125,6 @@ export default function PrijavaPage() {
                     </button>
                   </div>
                 </div>
-
                 <div className={styles.formOptions}>
                   <label className={styles.checkboxLabel}>
                     <input
@@ -115,7 +140,6 @@ export default function PrijavaPage() {
                     Zaboravili ste lozinku?
                   </Link>
                 </div>
-
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -131,11 +155,9 @@ export default function PrijavaPage() {
                   )}
                 </button>
               </form>
-
               <div className={styles.divider}>
                 <span className={styles.dividerText}>ili</span>
               </div>
-
               <button onClick={handleGoogleLogin} className={styles.googleButton}>
                 <svg className={styles.googleIcon} viewBox="0 0 24 24" width="20" height="20">
                   <path
@@ -157,7 +179,6 @@ export default function PrijavaPage() {
                 </svg>
                 Nastavite sa Google
               </button>
-
               <div className={styles.signupPrompt}>
                 <p>
                   Nemate nalog?{" "}
@@ -168,7 +189,6 @@ export default function PrijavaPage() {
               </div>
             </div>
           </div>
-
           <div className={styles.imageContainer}>
             <div className={styles.heroImage}>
               <img
@@ -186,7 +206,6 @@ export default function PrijavaPage() {
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
   )

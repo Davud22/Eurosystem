@@ -22,24 +22,48 @@ export default function RegistracijaPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
+  const [modal, setModal] = useState({ open: false, message: "" })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-
-    // Validacija
+    setModal({ open: false, message: "" })
     if (formData.password !== formData.confirmPassword) {
-      alert("Lozinke se ne poklapaju!")
+      setModal({ open: true, message: "Lozinke se ne poklapaju!" })
       setIsLoading(false)
       return
     }
-
-    // Simulacija API poziva
-    setTimeout(() => {
-      console.log("Registracija:", formData)
+    try {
+      const res = await fetch("http://localhost:8000/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        }),
+      })
+      if (res.status === 409) {
+        setModal({ open: true, message: "Email već postoji!" })
+        setIsLoading(false)
+        return
+      }
+      if (!res.ok) {
+        setModal({ open: true, message: "Greška prilikom registracije!" })
+        setIsLoading(false)
+        return
+      }
+      setModal({ open: true, message: "Registracija uspješna! Preusmjeravanje na login..." })
+      setTimeout(() => {
+        window.location.href = "/prijava"
+      }, 1500)
+    } catch (err) {
+      setModal({ open: true, message: "Greška na serveru!" })
+    } finally {
       setIsLoading(false)
-      // Ovdje će biti logika za registraciju
-    }, 2000)
+    }
   }
 
   const handleChange = (e) => {
@@ -48,8 +72,6 @@ export default function RegistracijaPage() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }))
-
-    // Provjera jačine lozinke
     if (name === "password") {
       checkPasswordStrength(value)
     }
@@ -105,7 +127,6 @@ export default function RegistracijaPage() {
   return (
     <div className={styles.page}>
       <Header />
-
       <main className={styles.main}>
         <div className={styles.container}>
           <div className={styles.formContainer}>
@@ -113,8 +134,12 @@ export default function RegistracijaPage() {
               <h1 className={styles.title}>Kreirajte nalog</h1>
               <p className={styles.subtitle}>Pridružite se Eurosystem zajednici</p>
             </div>
-
             <div className={styles.authCard}>
+              {modal.open && (
+                <div style={{ background: "#fee", color: "#b00", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center" }}>
+                  {modal.message}
+                </div>
+              )}
               <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>

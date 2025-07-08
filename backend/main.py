@@ -4,6 +4,7 @@ from database import engine
 from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from starlette.middleware.cors import CORSMiddleware
+from controllers import auth_controller
 
 
 def create_db_and_tables():
@@ -38,3 +39,4 @@ def start_application():
 
 
 app = start_application()
+app.include_router(auth_controller.router)
