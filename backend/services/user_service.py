@@ -33,7 +33,8 @@ def create_user(session: Session, first_name: str, last_name: str, email: str, p
         email=email, 
         phone=phone, 
         hashed_password=hashed_pw, 
-        role=role
+        role=role,
+        is_active=True
     )
     return user_repository.create_user(session, user)
 
@@ -46,17 +47,43 @@ def get_user_by_id(session: Session, user_id: int) -> Optional[User]:
 def get_all_users(session: Session) -> list[User]:
     return user_repository.get_all_users(session)
 
+def get_active_users(session: Session) -> list[User]:
+    return user_repository.get_active_users(session)
+
 def update_user(session: Session, user: User) -> User:
     return user_repository.update_user(session, user)
 
 def delete_user(session: Session, user_id: int) -> bool:
     return user_repository.delete_user(session, user_id)
 
+def block_user(session: Session, user_id: int) -> bool:
+    user = user_repository.get_by_id(session, user_id)
+    if not user:
+        return False
+    
+    user.is_active = False
+    user_repository.update_user(session, user)
+    return True
+
+def unblock_user(session: Session, user_id: int) -> bool:
+    user = user_repository.get_by_id(session, user_id)
+    if not user:
+        return False
+    
+    user.is_active = True
+    user_repository.update_user(session, user)
+    return True
+
 # Authentication
 def authenticate_user(session: Session, email: str, password: str) -> Optional[User]:
     user = user_repository.get_by_email(session, email)
     if not user or not verify_password(password, user.hashed_password):
         return None
+    
+    # Provjeri da li je korisnik blokiran
+    if not user.is_active:
+        return None
+    
     return user
 
 # Password reset
@@ -140,6 +167,10 @@ def google_login(session: Session, id_token: str) -> User:
     if not user:
         raise HTTPException(status_code=404, detail="Nalog ne postoji, registrirajte se prvo!")
     
+    # Provjeri da li je korisnik blokiran
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Vaš nalog je blokiran.")
+    
     return user
 
 def google_register(session: Session, id_token: str) -> User:
@@ -164,6 +195,7 @@ def google_register(session: Session, id_token: str) -> User:
         email=email,
         phone=None,
         hashed_password="",
-        role=UserRole.user
+        role=UserRole.user,
+        is_active=True
     )
     return user_repository.create_user(session, user)

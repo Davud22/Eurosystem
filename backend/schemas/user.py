@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from enum import Enum
+from datetime import datetime
 
 class UserRole(str, Enum):
     user = "user"
@@ -24,6 +25,8 @@ class UserOut(BaseModel):
     email: EmailStr
     phone: Optional[str]
     role: UserRole
+    is_active: bool
+    created_at: datetime
     class Config:
         orm_mode = True
 

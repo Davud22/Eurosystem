@@ -15,4 +15,5 @@ class User(SQLModel, table=True):
     phone: Optional[str] = None
     hashed_password: str
     role: UserRole = Field(default=UserRole.user, nullable=False)
+    is_active: bool = Field(default=True, nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow) 
