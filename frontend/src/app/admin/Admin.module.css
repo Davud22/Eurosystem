@@ -336,6 +336,8 @@
 .actions {
   display: flex;
   gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .editButton,
@@ -355,25 +357,65 @@
   background-color: #bfdbfe;
 }
 
-.blockButton {
-  padding: 0.25rem 0.75rem;
-  background-color: #fee2e2;
-  color: #dc2626;
+.blockButton, .unblockButton, .deleteButton {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
   border: none;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+  font-size: 0.93rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
+.blockButton {
+  background: #fee2e2;
+  color: #b91c1c;
+}
 .blockButton:hover {
-  background-color: #fecaca;
+  background: #ef4444;
+  color: #fff;
+}
+.unblockButton {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.unblockButton:hover {
+  background: #22c55e;
+  color: #fff;
+}
+.deleteButton {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.deleteButton:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.tableRow > span:last-child {
+  min-width: 120px;
+  justify-content: flex-end;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .statusActive {
   padding: 0.25rem 0.5rem;
   background-color: #dcfce7;
   color: #16a34a;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.statusBlocked {
+  padding: 0.25rem 0.5rem;
+  background-color: #fee2e2;
+  color: #b91c1c;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -635,4 +677,17 @@
 .deleteButton:hover {
   background: #ef4444;
   color: #fff;
+}
+.userStats {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.userStats span {
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 0.5rem;
+  font-weight: 500;
 }

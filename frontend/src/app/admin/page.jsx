@@ -14,6 +14,9 @@ import {
   Eye,
   Star,
   UserPlus,
+  Trash2,
+  UserX,
+  UserCheck,
 } from "lucide-react"
 import Header from "../components/Header/Header"
 import styles from "./Admin.module.css"
@@ -107,6 +110,12 @@ export default function AdminDashboard() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const BACKEND_URL = "http://localhost:8000";
   
+  // Korisnici state
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+  const [blockUserId, setBlockUserId] = useState(null);
+  
   // Dohvati proizvode
   useEffect(() => {
     if (activeTab === "products") {
@@ -116,6 +125,18 @@ export default function AdminDashboard() {
         .then(data => setProducts(data))
         .catch(() => setProducts([]))
         .finally(() => setLoadingProducts(false));
+    }
+  }, [activeTab]);
+  
+  // Dohvati korisnike
+  useEffect(() => {
+    if (activeTab === "users") {
+      setLoadingUsers(true);
+      fetch(`${BACKEND_URL}/admin/users`)
+        .then(res => res.json())
+        .then(data => setUsers(data))
+        .catch(() => setUsers([]))
+        .finally(() => setLoadingUsers(false));
     }
   }, [activeTab]);
   
@@ -137,6 +158,44 @@ export default function AdminDashboard() {
       setDeleteId(null);
     } catch {
       setModal({ open: true, message: "Greška pri brisanju!", type: "error" });
+    }
+  };
+  
+  // Brisanje korisnika
+  const handleDeleteUser = async (id) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/admin/users/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setModal({ open: true, message: "Korisnik uspješno obrisan!", type: "success" });
+      setUsers(users.filter(u => u.id !== id));
+      setDeleteUserId(null);
+    } catch {
+      setModal({ open: true, message: "Greška pri brisanju korisnika!", type: "error" });
+    }
+  };
+  
+  // Blokiranje korisnika
+  const handleBlockUser = async (id) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/admin/users/${id}/block`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      setModal({ open: true, message: "Korisnik uspješno blokiran!", type: "success" });
+      setUsers(users.map(u => u.id === id ? { ...u, is_active: false } : u));
+      setBlockUserId(null);
+    } catch {
+      setModal({ open: true, message: "Greška pri blokiranju korisnika!", type: "error" });
+    }
+  };
+  
+  // Aktiviranje korisnika
+  const handleUnblockUser = async (id) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/admin/users/${id}/unblock`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      setModal({ open: true, message: "Korisnik uspješno aktiviran!", type: "success" });
+      setUsers(users.map(u => u.id === id ? { ...u, is_active: true } : u));
+    } catch {
+      setModal({ open: true, message: "Greška pri aktiviranju korisnika!", type: "error" });
     }
   };
   
@@ -202,6 +261,12 @@ export default function AdminDashboard() {
       </div>
     );
   }
+
+  // Formatiranje datuma
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('bs-BA');
+  };
 
   return (
     <div className={styles.admin}>
@@ -397,30 +462,92 @@ export default function AdminDashboard() {
             <div className={styles.usersSection}>
               <div className={styles.sectionHeader}>
                 <h1 className={styles.pageTitle}>Upravljanje korisnicima</h1>
-                <button className={styles.addButton}>
-                  <UserPlus size={20} />
-                  Dodaj korisnika
-                </button>
-              </div>
-              <div className={styles.table}>
-                <div className={styles.tableHeader}>
-                  <span>Ime</span>
-                  <span>Email</span>
-                  <span>Datum registracije</span>
-                  <span>Status</span>
-                  <span>Akcije</span>
-                </div>
-                <div className={styles.tableRow}>
-                  <span>Marko Petrović</span>
-                  <span>marko@example.com</span>
-                  <span>10.12.2024</span>
-                  <span className={styles.statusActive}>Aktivan</span>
-                  <span className={styles.actions}>
-                    <button className={styles.editButton}>Uredi</button>
-                    <button className={styles.blockButton}>Blokiraj</button>
-                  </span>
+                <div className={styles.userStats}>
+                  <span>Ukupno: {users.length}</span>
+                  <span>Aktivni: {users.filter(u => u.is_active).length}</span>
+                  <span>Blokirani: {users.filter(u => !u.is_active).length}</span>
                 </div>
               </div>
+              {modal.open && (
+                <div style={{ background: modal.type === "success" ? "#d1fae5" : "#fee2e2", color: modal.type === "success" ? "#047857" : "#b91c1c", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center", fontWeight: 500 }}>{modal.message}</div>
+              )}
+              {loadingUsers ? (
+                <div>Učitavanje korisnika...</div>
+              ) : (
+                <div className={styles.table}>
+                  <div className={styles.tableHeader}>
+                    <span>Ime i prezime</span>
+                    <span>Email</span>
+                    
+                    <span>Datum registracije</span>
+                    <span>Status</span>
+                    <span>Akcije</span>
+                  </div>
+                  {users.map((user) => (
+                    <div key={user.id} className={styles.tableRow}>
+                      <span>{user.first_name} {user.last_name}</span>
+                      <span>{user.email}</span>
+                      
+                      <span>{formatDate(user.created_at)}</span>
+                      <span className={user.is_active ? styles.statusActive : styles.statusBlocked}>
+                        {user.is_active ? "Aktivan" : "Blokiran"}
+                      </span>
+                      <span className={styles.actions}>
+                        {user.is_active ? (
+                          <button 
+                            onClick={() => setBlockUserId(user.id)} 
+                            className={styles.blockButton}
+                            title="Blokiraj korisnika"
+                          >
+                            <UserX size={16} />
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => handleUnblockUser(user.id)} 
+                            className={styles.unblockButton}
+                            title="Aktiviraj korisnika"
+                          >
+                            <UserCheck size={16} />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => setDeleteUserId(user.id)} 
+                          className={styles.deleteButton}
+                          title="Obriši korisnika"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Modal za potvrdu brisanja korisnika */}
+              {deleteUserId && (
+                <div className={styles.modalOverlay}>
+                  <div className={styles.modalContent}>
+                    <h3>Jeste li sigurni da želite obrisati ovog korisnika?</h3>
+                    <p style={{ color: "#666", marginBottom: 16 }}>Ova akcija se ne može poništiti.</p>
+                    <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                      <button onClick={() => handleDeleteUser(deleteUserId)} className={styles.deleteButton}>Obriši</button>
+                      <button onClick={() => setDeleteUserId(null)} className={styles.cancelButton}>Otkaži</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Modal za potvrdu blokiranja korisnika */}
+              {blockUserId && (
+                <div className={styles.modalOverlay}>
+                  <div className={styles.modalContent}>
+                    <h3>Jeste li sigurni da želite blokirati ovog korisnika?</h3>
+                    <p style={{ color: "#666", marginBottom: 16 }}>Korisnik neće moći pristupiti sistemu.</p>
+                    <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                      <button onClick={() => handleBlockUser(blockUserId)} className={styles.blockButton}>Blokiraj</button>
+                      <button onClick={() => setBlockUserId(null)} className={styles.cancelButton}>Otkaži</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

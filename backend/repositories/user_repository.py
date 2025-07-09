@@ -12,6 +12,10 @@ def get_by_id(session: Session, user_id: int) -> Optional[User]:
 def get_all_users(session: Session) -> List[User]:
     return session.exec(select(User)).all()
 
+def get_active_users(session: Session) -> List[User]:
+    statement = select(User).where(User.is_active == True)
+    return session.exec(statement).all()
+
 def get_users_by_role(session: Session, role: UserRole) -> List[User]:
     statement = select(User).where(User.role == role)
     return session.exec(statement).all()
