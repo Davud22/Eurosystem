@@ -7,6 +7,8 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select
 from starlette.middleware.cors import CORSMiddleware
 from controllers import auth_controller
 from controllers import product_controller
+from controllers import public_product_controller
+from controllers import admin_controller
 from dotenv import load_dotenv
 import os
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
@@ -46,4 +48,6 @@ def start_application():
 app = start_application()
 app.include_router(auth_controller.router)
 app.include_router(product_controller.router)
+app.include_router(public_product_controller.router)
+app.include_router(admin_controller.router)
 app.mount("/images", StaticFiles(directory="images"), name="images")

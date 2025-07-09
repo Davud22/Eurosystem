@@ -10,29 +10,57 @@ from fastapi import HTTPException, status
 from services.jwt_service import create_reset_token, decode_token
 import time
 import requests
+from typing import Optional
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Password utilities
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-def create_user(session: Session, first_name: str, last_name: str, email: str, phone: str, password: str, role: UserRole = UserRole.user):
-    if user_repository.get_by_email(session, email):
+# User management
+def create_user(session: Session, first_name: str, last_name: str, email: str, phone: str, password: str, role: UserRole = UserRole.user) -> User:
+    if user_repository.user_exists(session, email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email već postoji.")
+    
     hashed_pw = hash_password(password)
-    user = User(first_name=first_name, last_name=last_name, email=email, phone=phone, hashed_password=hashed_pw, role=role)
+    user = User(
+        first_name=first_name, 
+        last_name=last_name, 
+        email=email, 
+        phone=phone, 
+        hashed_password=hashed_pw, 
+        role=role
+    )
     return user_repository.create_user(session, user)
 
-def authenticate_user(session: Session, email: str, password: str):
+def get_user_by_email(session: Session, email: str) -> Optional[User]:
+    return user_repository.get_by_email(session, email)
+
+def get_user_by_id(session: Session, user_id: int) -> Optional[User]:
+    return user_repository.get_by_id(session, user_id)
+
+def get_all_users(session: Session) -> list[User]:
+    return user_repository.get_all_users(session)
+
+def update_user(session: Session, user: User) -> User:
+    return user_repository.update_user(session, user)
+
+def delete_user(session: Session, user_id: int) -> bool:
+    return user_repository.delete_user(session, user_id)
+
+# Authentication
+def authenticate_user(session: Session, email: str, password: str) -> Optional[User]:
     user = user_repository.get_by_email(session, email)
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
 
-def send_reset_email(to_email: str, reset_link: str):
+# Password reset
+def send_reset_email(to_email: str, reset_link: str) -> None:
     smtp_host = os.getenv("SMTP_HOST")
     smtp_port = os.getenv("SMTP_PORT")
     smtp_user = os.getenv("SMTP_USER")
@@ -71,61 +99,71 @@ def send_reset_email(to_email: str, reset_link: str):
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, to_email, msg.as_string())
 
-def generate_reset_token(session: Session, email: str, frontend_url: str = "http://localhost:3000"):  # Dodajem parametar za frontend base url
+def generate_reset_token(session: Session, email: str, frontend_url: str = "http://localhost:3000") -> bool:
     user = user_repository.get_by_email(session, email)
     if not user:
-        return None
+        return False
+    
     token = create_reset_token(email)
     reset_link = f"{frontend_url}/reset-lozinke?token={token}"
     send_reset_email(email, reset_link)
     return True
 
-def reset_password(session: Session, token: str, new_password: str):
+def reset_password(session: Session, token: str, new_password: str) -> bool:
     payload = decode_token(token)
     if not payload or "sub" not in payload:
         raise HTTPException(status_code=400, detail="Neispravan ili istekao token.")
+    
     email = payload["sub"]
     user = user_repository.get_by_email(session, email)
     if not user:
         raise HTTPException(status_code=404, detail="Korisnik ne postoji.")
+    
     user.hashed_password = hash_password(new_password)
     user_repository.update_user(session, user)
     return True
 
+# Google authentication
 GOOGLE_TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo"
 
-def google_login(session, id_token: str):
+def google_login(session: Session, id_token: str) -> User:
     resp = requests.get(GOOGLE_TOKEN_INFO_URL, params={"id_token": id_token})
     if resp.status_code != 200:
         raise HTTPException(status_code=400, detail="Neispravan Google token.")
+    
     info = resp.json()
     email = info.get("email")
     if not email:
         raise HTTPException(status_code=400, detail="Nedostaju podaci iz Google tokena.")
+    
     user = user_repository.get_by_email(session, email)
     if not user:
         raise HTTPException(status_code=404, detail="Nalog ne postoji, registrirajte se prvo!")
+    
     return user
 
-def google_register(session, id_token: str):
+def google_register(session: Session, id_token: str) -> User:
     resp = requests.get(GOOGLE_TOKEN_INFO_URL, params={"id_token": id_token})
     if resp.status_code != 200:
         raise HTTPException(status_code=400, detail="Neispravan Google token.")
+    
     info = resp.json()
     email = info.get("email")
     first_name = info.get("given_name", "")
     last_name = info.get("family_name", "")
+    
     if not email:
         raise HTTPException(status_code=400, detail="Nedostaju podaci iz Google tokena.")
-    user = user_repository.get_by_email(session, email)
-    if user:
+    
+    if user_repository.user_exists(session, email):
         raise HTTPException(status_code=409, detail="Nalog već postoji, prijavite se!")
-    user = user_repository.create_user(
-        session,
+    
+    user = User(
         first_name=first_name,
         last_name=last_name,
         email=email,
         phone=None,
-        password=""
+        hashed_password="",
+        role=UserRole.user
     )
-    return user
+    return user_repository.create_user(session, user)

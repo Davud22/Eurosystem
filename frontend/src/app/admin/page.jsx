@@ -106,6 +106,7 @@ export default function AdminDashboard() {
   const [editProduct, setEditProduct] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const BACKEND_URL = "http://localhost:8000";
+  
   // Dohvati proizvode
   useEffect(() => {
     if (activeTab === "products") {
@@ -117,6 +118,7 @@ export default function AdminDashboard() {
         .finally(() => setLoadingProducts(false));
     }
   }, [activeTab]);
+  
   // Modal za uspjeh/grešku automatski nestaje
   useEffect(() => {
     if (modal.open) {
@@ -124,6 +126,7 @@ export default function AdminDashboard() {
       return () => clearTimeout(timeout);
     }
   }, [modal.open]);
+  
   // Brisanje proizvoda
   const handleDelete = async (id) => {
     try {
@@ -136,6 +139,7 @@ export default function AdminDashboard() {
       setModal({ open: true, message: "Greška pri brisanju!", type: "error" });
     }
   };
+  
   // Uređivanje proizvoda
   const handleEditSave = async (updated) => {
     try {
@@ -164,6 +168,7 @@ export default function AdminDashboard() {
       setModal({ open: true, message: "Greška pri ažuriranju!", type: "error" });
     }
   };
+  
   const categories = [
     "Alarmni sistemi",
     "Videonadzor",
@@ -172,6 +177,7 @@ export default function AdminDashboard() {
     "Poslovni sistemi",
     "Održavanje",
   ];
+  
   // Modal za uređivanje proizvoda
   function EditProductModal({ product, onSave, onClose }) {
     const [form, setForm] = useState({ ...product });
