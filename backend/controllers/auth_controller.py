@@ -4,7 +4,7 @@ from schemas.user import UserCreate, UserLogin, UserOut, Token, UserGoogleLogin
 from models.user import UserRole
 from services import user_service
 from services.jwt_service import create_access_token
-from database import engine
+from database import get_session
 import os
 import time
 from collections import defaultdict
@@ -26,10 +26,6 @@ def is_rate_limited(ip: str) -> bool:
     
     reset_attempts[ip].append(now)
     return False
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 @router.post("/register", response_model=UserOut)
 def register(user_in: UserCreate, session: Session = Depends(get_session)):

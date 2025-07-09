@@ -2,14 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 from services import product_service
 from schemas.product import ProductOut
-from database import engine
+from database import get_session
 from typing import List, Optional
 
 router = APIRouter(prefix="/products", tags=["public-products"])
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 @router.get("/", response_model=List[ProductOut])
 def get_products(

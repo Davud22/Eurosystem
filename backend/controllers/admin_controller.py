@@ -2,15 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from services import user_service
 from schemas.user import UserOut
-from database import engine
+from database import get_session
 from typing import List
 from models.user import UserRole
 
 router = APIRouter(prefix="/admin/users", tags=["admin"])
-
-def get_session():
-    with Session(engine) as session:
-        yield session
 
 @router.get("/", response_model=List[UserOut])
 def get_all_users(session: Session = Depends(get_session)):
