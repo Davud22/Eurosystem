@@ -588,8 +588,11 @@
 }
 .modalOverlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.22);
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.45);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -602,17 +605,28 @@
 }
 .modalContent {
   background: var(--bg-primary);
-  border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-  padding: 2rem 2.5rem;
-  min-width: 320px;
-  max-width: 95vw;
-  animation: popIn 0.2s;
-  color: var(--text-primary);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  padding: 40px 48px 32px 48px;
+  min-width: 420px;
+  max-width: 700px;
+  min-height: 350px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  font-size: 18px;
 }
 @keyframes popIn {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+@media (max-width: 600px) {
+  .modalContent {
+    min-width: 90vw;
+    padding: 18px 8vw 18px 8vw;
+  }
 }
 .logoutButton {
   width: 100%;
@@ -649,34 +663,36 @@
 }
 .cancelButton {
   background: #f3f4f6;
-  color: #222;
+  color: #374151;
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.7rem 1.5rem;
-  font-size: 1.05rem;
+  border-radius: 8px;
+  padding: 8px 22px;
+  font-size: 17px;
   font-weight: 600;
   cursor: pointer;
-  margin-right: 8px;
+  margin-top: 8px;
   transition: background 0.2s, color 0.2s;
 }
 .cancelButton:hover {
   background: #e5e7eb;
-  color: #111;
+  color: #111827;
 }
 .deleteButton {
   background: #fee2e2;
   color: #b91c1c;
   border: none;
-  border-radius: 0.5rem;
-  padding: 0.7rem 1.5rem;
-  font-size: 1.05rem;
+  border-radius: 8px;
+  padding: 8px 22px;
+  font-size: 17px;
   font-weight: 600;
   cursor: pointer;
+  margin-top: 8px;
+  margin-right: 8px;
   transition: background 0.2s, color 0.2s;
 }
 .deleteButton:hover {
-  background: #ef4444;
-  color: #fff;
+  background: #fecaca;
+  color: #7f1d1d;
 }
 .userStats {
   display: flex;
@@ -690,4 +706,146 @@
   background: var(--bg-secondary);
   border-radius: 0.5rem;
   font-weight: 500;
+}
+
+.bigActionButton {
+  min-width: 220px;
+  height: 60px;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 12px;
+  padding: 0 0;
+}
+
+.blogFormWrapper {
+  display: flex;
+  gap: 48px;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 0 auto;
+  max-width: 950px;
+  background: var(--bg-primary);
+  border-radius: 22px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+  padding: 48px 32px 40px 32px;
+  margin-top: 56px;
+}
+@media (max-width: 900px) {
+  .blogFormWrapper {
+    flex-direction: column;
+    gap: 32px;
+    padding: 32px 8vw 32px 8vw;
+    margin-top: 32px;
+  }
+}
+.blogFormLeft {
+  flex: 1;
+  min-width: 220px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.blogFormLeft h1 {
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.blogFormLeft p {
+  color: #888;
+  font-size: 1.15rem;
+}
+.blogFormRight {
+  flex: 2;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.blogDropZone {
+  border: 2px dashed var(--border-primary, #475569);
+  border-radius: 12px;
+  background: var(--bg-secondary, #23293a);
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border 0.2s, background 0.2s;
+  position: relative;
+  margin-bottom: 8px;
+}
+.blogDropZone:hover {
+  border-color: #60a5fa;
+  background: var(--bg-primary, #2d3547);
+}
+.blogDropZone p {
+  color: #cbd5e1;
+  font-size: 16px;
+}
+.blogDropZone .uploadIcon {
+  color: #a5b4fc;
+}
+.blogImagePreview {
+  max-width: 220px;
+  max-height: 140px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  margin: 0 auto;
+  display: block;
+}
+.blogFormActions {
+  display: flex;
+  gap: 18px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+@media (max-width: 600px) {
+  .blogFormActions {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+}
+.blogFormButton {
+  min-width: 160px !important;
+  height: 48px !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.blogFormButton:visited, .blogFormButton:active, .blogFormButton:focus {
+  text-decoration: none !important;
+  outline: none;
+}
+.actionButton, .actionButton:visited, .actionButton:active, .actionButton:focus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+  height: 48px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 10px;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  text-align: center;
+  line-height: 1;
+  vertical-align: middle;
+  padding: 0;
+  margin: 0;
+  background: none;
+  text-decoration: none;
+  cursor: pointer;
+  appearance: none;
 }

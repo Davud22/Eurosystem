@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import Header from "../components/Header/Header"
 import styles from "./Admin.module.css"
+import Link from "next/link";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -268,6 +269,33 @@ export default function AdminDashboard() {
     return date.toLocaleDateString('bs-BA');
   };
 
+  // Blog statistika
+  const [blogStats, setBlogStats] = useState({ total: 0, avgRating: 0, totalComments: 0, top: [] });
+  useEffect(() => {
+    fetch("http://localhost:8000/admin/blogs")
+      .then(res => res.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        const total = data.length;
+        const avgRating = total ? (data.reduce((a, b) => a + (b.avg_rating || 0), 0) / total) : 0;
+        const totalComments = data.reduce((a, b) => a + (b.num_comments || 0), 0);
+        const top = [...data].sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 3);
+        setBlogStats({ total, avgRating, totalComments, top });
+      });
+  }, []);
+
+  const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/admin/blogs`)
+      .then(res => res.json())
+      .then(data => {
+        setBlogs(data);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div className={styles.admin}>
       <Header />
@@ -404,6 +432,26 @@ export default function AdminDashboard() {
                     <span className={styles.statChange}>Odlično</span>
                   </div>
                 </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon}>
+                    <FileText size={24} />
+                  </div>
+                  <div className={styles.statContent}>
+                    <h3 className={styles.statNumber}>{blogStats.total}</h3>
+                    <p className={styles.statLabel}>Blogova</p>
+                    <span className={styles.statChange}>Ocjena: {blogStats.avgRating.toFixed(1)}</span>
+                  </div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon}>
+                    <MessageSquare size={24} />
+                  </div>
+                  <div className={styles.statContent}>
+                    <h3 className={styles.statNumber}>{blogStats.totalComments}</h3>
+                    <p className={styles.statLabel}>Komentara na blogovima</p>
+                    <span className={styles.statChange}>Top blogovi:</span>
+                  </div>
+                </div>
               </div>
 
               <div className={styles.contentGrid}>
@@ -447,6 +495,28 @@ export default function AdminDashboard() {
                             <span className={styles.productSales}>
                               <ShoppingCart size={14} />
                               {product.sales}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className={styles.topProducts}>
+                  <h2 className={styles.sectionTitle}>Top blogovi</h2>
+                  <div className={styles.productsList}>
+                    {blogStats.top.map((blog, idx) => (
+                      <div key={blog.id} className={styles.productItem}>
+                        <div className={styles.productRank}>#{idx + 1}</div>
+                        <div className={styles.productInfo}>
+                          <h4 className={styles.productName}>{blog.title}</h4>
+                          <div className={styles.productStats}>
+                            <span className={styles.productViews}>
+                              <FileText size={14} />
+                              {blog.num_comments} komentara
+                            </span>
+                            <span className={styles.productSales}>
+                              ★ {blog.avg_rating.toFixed(1)}
                             </span>
                           </div>
                         </div>
@@ -651,14 +721,39 @@ export default function AdminDashboard() {
             <div className={styles.blogSection}>
               <div className={styles.sectionHeader}>
                 <h1 className={styles.pageTitle}>Blog upravljanje</h1>
-                <button className={styles.addButton}>
-                  <FileText size={20} />
-                  Nova objava
-                </button>
+                <Link href="/admin/dodaj-blog" className={styles.addButton}>
+                  <FileText size={20} /> Nova objava
+                </Link>
               </div>
-              <p className={styles.emptyState}>
-                Ovdje će biti lista blog objava sa opcijama za dodavanje, uređivanje i brisanje.
-              </p>
+              {loading ? (
+                <p>Učitavanje blogova...</p>
+              ) : blogs.length === 0 ? (
+                <p className={styles.emptyState}>Nema blog objava.</p>
+              ) : (
+                <div className={styles.productsGrid}>
+                  {blogs.map(blog => (
+                    <div key={blog.id} className={styles.productCard}>
+                      <img
+                        src={blog.image_url ? (blog.image_url.startsWith("/images/") ? `${BACKEND_URL}${blog.image_url}` : blog.image_url) : "/placeholder.svg"}
+                        alt={blog.title}
+                        className={styles.productImage}
+                        style={{ border: "2px solid #ddd", background: "#fff" }}
+                      />
+                      <div className={styles.productInfo}>
+                        <h3>{blog.title}</h3>
+                        <p style={{ color: "#888", fontSize: 14, margin: "4px 0" }}>
+                          Autor: {blog.author} | {new Date(blog.created_at).toLocaleDateString("bs-BA")}<br/>
+                          Komentara: {blog.num_comments} | Ocjena: {blog.avg_rating?.toFixed(1) ?? "-"}
+                        </p>
+                        <p>{blog.content.slice(0, 100)}...</p>
+                        <div style={{ display: "flex", gap: 8, marginLeft: "auto", marginTop: 8 }}>
+                          <Link href={`/admin/blog/${blog.id}`} className={styles.editButton}>Detalji</Link>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
