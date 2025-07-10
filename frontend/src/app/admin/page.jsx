@@ -351,6 +351,12 @@ export default function AdminDashboard() {
 
   // Uklanjam funkciju za update projekata i sve povezano s editiranjem projekata
 
+  const fetchBlogs = () => {
+    fetch(`${BACKEND_URL}/admin/blogs`)
+      .then(res => res.json())
+      .then(data => setBlogs(data));
+  };
+
   return (
     <div className={styles.admin}>
       <Header />

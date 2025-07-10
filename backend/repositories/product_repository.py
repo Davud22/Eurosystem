@@ -51,4 +51,8 @@ def delete_product_repository(db: Session, product_id: int) -> bool:
     return False
 
 def product_exists_repository(db: Session, product_id: int) -> bool:
-    return get_product_repository(db, product_id) is not None 
+    return get_product_repository(db, product_id) is not None
+
+def get_latest_products_repository(db: Session, limit: int = 3) -> List[Product]:
+    statement = select(Product).order_by(Product.created_at.desc()).limit(limit)
+    return db.exec(statement).all() 

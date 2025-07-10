@@ -32,3 +32,7 @@ def update_blog_stats(session: Session, blog_id: int, avg_rating: float, num_com
         session.refresh(blog)
         return blog
     return None 
+
+def get_top_blogs(session: Session, limit: int = 3) -> List[Blog]:
+    statement = select(Blog).order_by(Blog.avg_rating.desc()).limit(limit)
+    return session.exec(statement).all() 

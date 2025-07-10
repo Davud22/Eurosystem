@@ -49,19 +49,19 @@ def login(user_in: UserLogin, session: Session = Depends(get_session)):
     if not user:
         raise HTTPException(status_code=400, detail="Pogrešan email ili lozinka!")
     
-    access_token = create_access_token({"sub": user.email, "role": user.role.value})
+    access_token = create_access_token({"sub": user.email, "user_id": user.id, "role": user.role.value})
     return {"access_token": access_token, "token_type": "bearer", "role": user.role.value}
 
 @router.post("/google-login", response_model=Token)
 def google_login_route(data: UserGoogleLogin, session: Session = Depends(get_session)):
     user = user_service.google_login(session, data.id_token)
-    access_token = create_access_token({"sub": user.email, "role": user.role.value})
+    access_token = create_access_token({"sub": user.email, "user_id": user.id, "role": user.role.value})
     return {"access_token": access_token, "token_type": "bearer", "role": user.role.value}
 
 @router.post("/google-register", response_model=Token)
 def google_register_route(data: UserGoogleLogin, session: Session = Depends(get_session)):
     user = user_service.google_register(session, data.id_token)
-    access_token = create_access_token({"sub": user.email, "role": user.role.value})
+    access_token = create_access_token({"sub": user.email, "user_id": user.id, "role": user.role.value})
     return {"access_token": access_token, "token_type": "bearer", "role": user.role.value}
 
 @router.post("/forgot-password")

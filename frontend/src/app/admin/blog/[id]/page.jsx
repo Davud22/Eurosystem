@@ -19,6 +19,7 @@ export default function BlogDetailPage() {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [modal, setModal] = useState({ open: false, message: "", type: "success" });
+  const [isDark, setIsDark] = useState(false); // Added for dark mode
 
   useEffect(() => {
     fetch(`${BACKEND_URL}/admin/blogs/${id}`)
@@ -31,12 +32,30 @@ export default function BlogDetailPage() {
 
   const fetchComments = () => {
     setLoadingComments(true);
-    fetch(`${BACKEND_URL}/comments/blog/${id}`)
-      .then(res => res.json())
+    fetch(`${BACKEND_URL}/admin/blogs/${id}/comments`)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Greška pri dohvaćanju komentara');
+        }
+        return res.json();
+      })
       .then(data => {
-        setComments(data);
+        console.log('Komentari:', data); // Debug
+        setComments(Array.isArray(data) ? data : []);
         setLoadingComments(false);
+      })
+      .catch(error => {
+        console.error('Greška:', error);
+        setComments([]);
+        setLoadingComments(false);
+        setModal({ open: true, message: "Greška pri dohvaćanju komentara!", type: "error" });
       });
+  };
+
+  const fetchBlog = () => {
+    fetch(`${BACKEND_URL}/admin/blogs/${id}`)
+      .then(res => res.json())
+      .then(data => setBlog(data));
   };
 
   const handleDelete = async () => {
@@ -56,9 +75,12 @@ export default function BlogDetailPage() {
 
   const handleDeleteComment = async (commentId) => {
     try {
-      const res = await fetch(`${BACKEND_URL}/comments/${commentId}`, { method: "DELETE" });
+      const res = await fetch(`${BACKEND_URL}/admin/blogs/${id}/comments/${commentId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       setComments(comments => comments.filter(c => c.id !== commentId));
+      fetchBlog(); // Refresh blog info (num_comments)
+      setModal({ open: true, message: "Komentar uspješno obrisan!", type: "success" });
+      setTimeout(() => setModal({ open: false, message: "" }), 2000);
     } catch {
       setModal({ open: true, message: "Greška pri brisanju komentara!", type: "error" });
       setTimeout(() => setModal({ open: false, message: "" }), 2000);
@@ -102,20 +124,90 @@ export default function BlogDetailPage() {
           {showComments && (
             <div className={styles.modalOverlay}>
               <div className={styles.modalContent} style={{ maxWidth: 700, minHeight: 350, padding: 40, position: "relative", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", borderRadius: 18 }}>
-                <button onClick={() => setShowComments(false)} style={{ position: "absolute", top: 24, right: 28, background: "none", border: "none", fontSize: 26, fontWeight: 700, color: "#aaa", cursor: "pointer" }} title="Zatvori">×</button>
+                <button onClick={() => { setShowComments(false); fetchBlog(); }} style={{ position: "absolute", top: 24, right: 28, background: "none", border: "none", fontSize: 26, fontWeight: 700, color: "#aaa", cursor: "pointer" }} title="Zatvori">×</button>
                 <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 18, textAlign: "center" }}>Komentari</h2>
                 {loadingComments ? (
                   <p style={{ textAlign: "center", fontSize: 18 }}>Učitavanje...</p>
-                ) : comments.length === 0 ? (
+                ) : !Array.isArray(comments) || comments.length === 0 ? (
                   <p style={{ textAlign: "center", fontSize: 18 }}>Nema komentara za ovaj blog.</p>
                 ) : (
-                  <div style={{ marginTop: 16, maxHeight: 350, overflowY: "auto" }}>
+                  <div style={{
+                    marginTop: 16,
+                    maxHeight: 350,
+                    overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 18
+                  }}>
                     {comments.map(comment => (
-                      <div key={comment.id} style={{ borderBottom: "1px solid #eee", padding: "18px 0", marginBottom: 8 }}>
-                        <div style={{ fontWeight: 700, fontSize: 19, marginBottom: 2 }}>{comment.author_full_name}</div>
-                        <div style={{ color: "#888", fontSize: 15 }}>{new Date(comment.created_at).toLocaleString("bs-BA")}</div>
-                        <div style={{ marginTop: 8, fontSize: 18 }}>{comment.content}</div>
-                        <button onClick={() => handleDeleteComment(comment.id)} className={styles.blogCommentDeleteButton} style={{ marginTop: 10, fontSize: 15, padding: "7px 18px", borderRadius: 8 }}>Obriši</button>
+                      <div
+                        key={comment.id}
+                        style={{
+                          borderRadius: 14,
+                          background: isDark ? "#232b39" : "#f4f7ff",
+                          border: isDark ? "1px solid #2d3748" : "1px solid #e5e7eb",
+                          boxShadow: isDark
+                            ? "0 2px 8px #10151c33"
+                            : "0 2px 8px #e0e7ef33",
+                          padding: "18px 22px 16px 22px",
+                          position: "relative",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 6
+                        }}
+                      >
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: 2
+                        }}>
+                          <span style={{
+                            fontWeight: 700,
+                            fontSize: 18,
+                            color: isDark ? "#fff" : "#222"
+                          }}>
+                            {comment.author_name}
+                          </span>
+                          <span style={{
+                            color: isDark ? "#8ca0b3" : "#64748b",
+                            fontSize: 13,
+                            fontWeight: 500
+                          }}>
+                            {new Date(comment.created_at).toLocaleString("bs-BA")}
+                          </span>
+                        </div>
+                        <div style={{
+                          fontSize: 17,
+                          color: isDark ? "#e0e6ed" : "#334155",
+                          marginBottom: 10,
+                          marginLeft: 2,
+                          wordBreak: "break-word"
+                        }}>
+                          {comment.content}
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className={styles.blogCommentDeleteButton}
+                            style={{
+                              background: isDark ? "#ef4444" : "#fee2e2",
+                              color: isDark ? "#fff" : "#b91c1c",
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "7px 22px",
+                              fontWeight: 600,
+                              fontSize: 15,
+                              cursor: "pointer",
+                              boxShadow: isDark
+                                ? "0 1px 4px #b91c1c22"
+                                : "0 1px 4px #fca5a522",
+                              transition: "background 0.2s"
+                            }}
+                          >
+                            Obriši
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
