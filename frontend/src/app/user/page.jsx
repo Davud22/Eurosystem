@@ -4,9 +4,32 @@ import { useState } from "react"
 import { User, ShoppingBag, Heart, MessageCircle, Settings, Star, TrendingUp } from "lucide-react"
 import Header from "../components/Header/Header"
 import styles from "./User.module.css"
+import { useAuth } from "../../hooks/useAuth"
 
 export default function UserDashboard() {
+  // Prvo svi hooks - redoslijed mora biti konzistentan
+  const { user, loading, error, logout } = useAuth('user')
   const [activeTab, setActiveTab] = useState("overview")
+
+  // Ako se učitava, prikaži loading
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Učitavanje...
+      </div>
+    )
+  }
+
+  // Ako nema korisnika, neće se prikazati (useAuth će preusmjeriti)
+  if (!user) {
+    return null
+  }
 
   const stats = {
     orders: 3,
@@ -47,8 +70,10 @@ export default function UserDashboard() {
     },
   ]
 
-  function logout() {
+  const handleLogout = () => {
     localStorage.removeItem("access_token");
+    // Ukloni i cookie
+    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     fetch("/api/logout").then(() => {
       window.location.replace("/prijava");
     });
@@ -59,7 +84,7 @@ export default function UserDashboard() {
       <Header />
 
       <button
-        onClick={logout}
+        onClick={handleLogout}
         style={{
           position: 'fixed',
           bottom: 40,

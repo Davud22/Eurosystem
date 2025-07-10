@@ -4,19 +4,43 @@ import Header from "../../components/Header/Header";
 import styles from "../dodaj-proizvod/DodajProizvod.module.css";
 import { Upload, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "../../../hooks/useAuth";
 
 const BACKEND_URL = "http://localhost:8000";
 
 export default function DodajProjekatPage() {
+  // Prvo svi hooks - redoslijed mora biti konzistentan
+  const { user, loading, error, logout } = useAuth('admin')
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     images: [],
+    category: ""
   });
   const [mainImageIdx, setMainImageIdx] = useState(0);
   const [dragActive, setDragActive] = useState(false);
   const [modal, setModal] = useState({ open: false, message: "" });
   const [uploading, setUploading] = useState(false);
+
+  // Ako se učitava, prikaži loading
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Učitavanje...
+      </div>
+    )
+  }
+
+  // Ako nema korisnika, neće se prikazati (useAuth će preusmjeriti)
+  if (!user) {
+    return null
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -90,6 +114,7 @@ export default function DodajProjekatPage() {
         title: formData.title,
         description: formData.description,
         images: formData.images.map((img) => img.url),
+        category: formData.category
       };
       const res = await fetch(`${BACKEND_URL}/admin/projects`, {
         method: "POST",
@@ -110,6 +135,13 @@ export default function DodajProjekatPage() {
 
   // --- Prikaz slike i thumbnails ---
   const mainImage = formData.images[mainImageIdx]?.url;
+  const categories = [
+    "Videonadzor",
+    "Alarmni sistemi",
+    "Kapije",
+    "Klima uređaji",
+    "Elektroinstalacioni radovi"
+  ]
 
   return (
     <div className={styles.page}>
@@ -154,6 +186,23 @@ export default function DodajProjekatPage() {
                 className={styles.textarea}
                 placeholder="Unesite opis projekta..."
               />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="category" className={styles.label}>Kategorija</label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className={styles.input}
+              >
+                <option value="">Odaberite kategoriju</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className={styles.formGroup}>
               <label className={styles.label}>Slike projekta</label>

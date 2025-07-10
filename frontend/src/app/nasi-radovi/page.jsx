@@ -9,7 +9,7 @@ import styles from "./NasiRadovi.module.css"
 export default function NasiRadoviPage() {
   const [selectedCategory, setSelectedCategory] = useState("Svi")
 
-  const categories = ["Svi", "Kućni sistemi", "Poslovni sistemi", "Pametne instalacije", "Videonadzor"]
+  const categories = ["Svi", "Videonadzor", "Alarmni sistemi", "Kapije", "Klima uređaji", "Elektroinstalacioni radovi"]
 
   const projects = [
     {
@@ -17,7 +17,7 @@ export default function NasiRadoviPage() {
       title: "Sigurnosni sistem - Vila Dedinje",
       description: "Kompletna instalacija alarmnog sistema i video nadzora za luksuznu vilu sa perimetarskom zaštitom",
       image: "/placeholder.svg?height=300&width=400",
-      category: "Kućni sistemi",
+      category: "Videonadzor",
       location: "Beograd, Dedinje",
       date: "Novembar 2024",
       rating: 5,
@@ -31,7 +31,7 @@ export default function NasiRadoviPage() {
       title: "Poslovni kompleks - Delta City",
       description: "Napredni sistem kontrole pristupa i video nadzora za trgovinski centar",
       image: "/placeholder.svg?height=300&width=400",
-      category: "Poslovni sistemi",
+      category: "Alarmni sistemi",
       location: "Beograd, Novi Beograd",
       date: "Oktobar 2024",
       rating: 5,
@@ -45,7 +45,7 @@ export default function NasiRadoviPage() {
       title: "Pametna kuća - Zemun",
       description: "Potpuna automatizacija kuće sa pametnim osvetljenjem i klimatizacijom",
       image: "/placeholder.svg?height=300&width=400",
-      category: "Pametne instalacije",
+      category: "Klima uređaji",
       location: "Beograd, Zemun",
       date: "Septembar 2024",
       rating: 5,
@@ -59,7 +59,7 @@ export default function NasiRadoviPage() {
       title: "Fabrika - Kragujevac",
       description: "Industrijski sigurnosni sistem sa perimetarskom zaštitom i kontrolom pristupa",
       image: "/placeholder.svg?height=300&width=400",
-      category: "Poslovni sistemi",
+      category: "Alarmni sistemi",
       location: "Kragujevac",
       date: "Avgust 2024",
       rating: 5,
@@ -87,7 +87,7 @@ export default function NasiRadoviPage() {
       title: "Restoran - Skadarlija",
       description: "Kompletni sigurnosni sistem za restoran sa video nadzorom i alarmom",
       image: "/placeholder.svg?height=300&width=400",
-      category: "Poslovni sistemi",
+      category: "Elektroinstalacioni radovi",
       location: "Beograd, Skadarlija",
       date: "Juni 2024",
       rating: 5,

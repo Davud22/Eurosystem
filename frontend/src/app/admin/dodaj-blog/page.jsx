@@ -6,21 +6,45 @@ import styles from "../Admin.module.css";
 import { Upload, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../../hooks/useAuth";
 
 const BACKEND_URL = "http://localhost:8000";
 
 export default function DodajBlogPage() {
+  // Prvo svi hooks - redoslijed mora biti konzistentan
+  const { user, loading, error, logout } = useAuth('admin')
   const [form, setForm] = useState({
     title: "",
     content: "",
     image_url: "",
-    author: "Admin"
+    author: "Admin",
+    category: ""
   });
   const [imagePreview, setImagePreview] = useState("");
   const [modal, setModal] = useState({ open: false, message: "", type: "success" });
   const [uploading, setUploading] = useState(false);
 
   const router = useRouter();
+
+  // Ako se učitava, prikaži loading
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Učitavanje...
+      </div>
+    )
+  }
+
+  // Ako nema korisnika, neće se prikazati (useAuth će preusmjeriti)
+  if (!user) {
+    return null
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,6 +96,14 @@ export default function DodajBlogPage() {
       setTimeout(() => setModal({ open: false, message: "" }), 3000);
     }
   };
+
+  const categories = [
+    "Videonadzor",
+    "Alarmni sistemi",
+    "Kapije",
+    "Klima uređaji",
+    "Elektroinstalacioni radovi"
+  ]
 
   return (
     <div className={styles.page}>
@@ -128,6 +160,23 @@ export default function DodajBlogPage() {
                   className={styles.input}
                   placeholder="Unesite ime autora"
                 />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="category" className={styles.label}>Kategorija</label>
+                <select
+                  id="category"
+                  name="category"
+                  value={form.category}
+                  onChange={handleChange}
+                  className={styles.input}
+                >
+                  <option value="">Odaberite kategoriju</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Slika bloga</label>

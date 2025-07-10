@@ -8,6 +8,7 @@ class Blog(SQLModel, table=True):
     content: str
     author: str
     image_url: Optional[str] = None
+    category: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     avg_rating: float = 0.0
     num_comments: int = 0 

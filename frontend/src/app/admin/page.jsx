@@ -22,9 +22,113 @@ import Header from "../components/Header/Header"
 import styles from "./Admin.module.css"
 import Link from "next/link";
 import { useRef } from "react";
+import { useAuth } from "../../hooks/useAuth"
 
 export default function AdminDashboard() {
+  // Prvo svi hooks - redoslijed mora biti konzistentan
+  const { user, loading, error, logout } = useAuth('admin')
   const [activeTab, setActiveTab] = useState("overview")
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [modal, setModal] = useState({ open: false, message: "", type: "success" });
+  const [deleteId, setDeleteId] = useState(null);
+  const [editProduct, setEditProduct] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+  const [blockUserId, setBlockUserId] = useState(null);
+  const [blogStats, setBlogStats] = useState({ total: 0, avgRating: 0, totalComments: 0, top: [] });
+  const [blogs, setBlogs] = useState([]);
+  const [loadingBlogs, setLoadingBlogs] = useState(true);
+  const [projects, setProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [deleteProjectId, setDeleteProjectId] = useState(null);
+
+  const BACKEND_URL = "http://localhost:8000";
+
+  // Svi useEffect hooks - uvijek se pozivaju
+  useEffect(() => {
+    if (activeTab === "products") {
+      setLoadingProducts(true);
+      fetch(`${BACKEND_URL}/admin/products`)
+        .then(res => res.json())
+        .then(data => setProducts(data))
+        .catch(() => setProducts([]))
+        .finally(() => setLoadingProducts(false));
+    }
+  }, [activeTab, BACKEND_URL]);
+  
+  useEffect(() => {
+    if (activeTab === "users") {
+      setLoadingUsers(true);
+      fetch(`${BACKEND_URL}/admin/users`)
+        .then(res => res.json())
+        .then(data => setUsers(data))
+        .catch(() => setUsers([]))
+        .finally(() => setLoadingUsers(false));
+    }
+  }, [activeTab, BACKEND_URL]);
+  
+  useEffect(() => {
+    if (modal.open) {
+      const timeout = setTimeout(() => setModal({ ...modal, open: false }), 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [modal.open, modal]);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/admin/blogs")
+      .then(res => res.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        const total = data.length;
+        const avgRating = total ? (data.reduce((a, b) => a + (b.avg_rating || 0), 0) / total) : 0;
+        const totalComments = data.reduce((a, b) => a + (b.num_comments || 0), 0);
+        const top = [...data].sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 3);
+        setBlogStats({ total, avgRating, totalComments, top });
+      });
+  }, []);
+
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/admin/blogs`)
+      .then(res => res.json())
+      .then(data => {
+        setBlogs(data);
+        setLoadingBlogs(false);
+      });
+  }, [BACKEND_URL]);
+
+  useEffect(() => {
+    if (activeTab === "portfolio") {
+      setLoadingProjects(true);
+      fetch(`${BACKEND_URL}/admin/projects`)
+        .then(res => res.json())
+        .then(data => setProjects(data))
+        .catch(() => setProjects([]))
+        .finally(() => setLoadingProjects(false));
+    }
+  }, [activeTab, BACKEND_URL]);
+
+  // Ako se učitava, prikaži loading
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Učitavanje...
+      </div>
+    )
+  }
+
+  // Ako nema korisnika, neće se prikazati (useAuth će preusmjeriti)
+  if (!user) {
+    return null
+  }
 
   const stats = {
     totalUsers: 1247,
@@ -96,60 +200,15 @@ export default function AdminDashboard() {
     }
   }
 
-  function logout() {
+  const handleLogout = () => {
     localStorage.removeItem("access_token");
+    // Ukloni i cookie
+    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     fetch("/api/logout").then(() => {
       window.location.replace("/prijava");
     });
   }
 
-  // Proizvodi state
-  const [products, setProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-  const [modal, setModal] = useState({ open: false, message: "", type: "success" });
-  const [deleteId, setDeleteId] = useState(null);
-  const [editProduct, setEditProduct] = useState(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const BACKEND_URL = "http://localhost:8000";
-  
-  // Korisnici state
-  const [users, setUsers] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [deleteUserId, setDeleteUserId] = useState(null);
-  const [blockUserId, setBlockUserId] = useState(null);
-  
-  // Dohvati proizvode
-  useEffect(() => {
-    if (activeTab === "products") {
-      setLoadingProducts(true);
-      fetch(`${BACKEND_URL}/admin/products`)
-        .then(res => res.json())
-        .then(data => setProducts(data))
-        .catch(() => setProducts([]))
-        .finally(() => setLoadingProducts(false));
-    }
-  }, [activeTab]);
-  
-  // Dohvati korisnike
-  useEffect(() => {
-    if (activeTab === "users") {
-      setLoadingUsers(true);
-      fetch(`${BACKEND_URL}/admin/users`)
-        .then(res => res.json())
-        .then(data => setUsers(data))
-        .catch(() => setUsers([]))
-        .finally(() => setLoadingUsers(false));
-    }
-  }, [activeTab]);
-  
-  // Modal za uspjeh/grešku automatski nestaje
-  useEffect(() => {
-    if (modal.open) {
-      const timeout = setTimeout(() => setModal({ ...modal, open: false }), 3000);
-      return () => clearTimeout(timeout);
-    }
-  }, [modal.open]);
-  
   // Brisanje proizvoda
   const handleDelete = async (id) => {
     try {
@@ -242,6 +301,13 @@ export default function AdminDashboard() {
   // Modal za uređivanje proizvoda
   function EditProductModal({ product, onSave, onClose }) {
     const [form, setForm] = useState({ ...product });
+    const categories = [
+      "Videonadzor",
+      "Alarmni sistemi",
+      "Kapije", 
+      "Klima uređaji",
+      "Elektroinstalacioni radovi"
+    ]
     return (
       <div className={styles.modalOverlay}>
         <div className={styles.modalContent}>
@@ -269,50 +335,6 @@ export default function AdminDashboard() {
     const date = new Date(dateString);
     return date.toLocaleDateString('bs-BA');
   };
-
-  // Blog statistika
-  const [blogStats, setBlogStats] = useState({ total: 0, avgRating: 0, totalComments: 0, top: [] });
-  useEffect(() => {
-    fetch("http://localhost:8000/admin/blogs")
-      .then(res => res.json())
-      .then(data => {
-        if (!Array.isArray(data)) return;
-        const total = data.length;
-        const avgRating = total ? (data.reduce((a, b) => a + (b.avg_rating || 0), 0) / total) : 0;
-        const totalComments = data.reduce((a, b) => a + (b.num_comments || 0), 0);
-        const top = [...data].sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 3);
-        setBlogStats({ total, avgRating, totalComments, top });
-      });
-  }, []);
-
-  const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`${BACKEND_URL}/admin/blogs`)
-      .then(res => res.json())
-      .then(data => {
-        setBlogs(data);
-        setLoading(false);
-      });
-  }, []);
-
-  // --- Projects (Radovi) state ---
-  const [projects, setProjects] = useState([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const [deleteProjectId, setDeleteProjectId] = useState(null);
-
-  // Fetch projects
-  useEffect(() => {
-    if (activeTab === "portfolio") {
-      setLoadingProjects(true);
-      fetch(`${BACKEND_URL}/admin/projects`)
-        .then(res => res.json())
-        .then(data => setProjects(data))
-        .catch(() => setProjects([]))
-        .finally(() => setLoadingProjects(false));
-    }
-  }, [activeTab]);
 
   // Delete project
   const handleDeleteProject = async (id) => {
@@ -404,7 +426,7 @@ export default function AdminDashboard() {
             </button>
             {/* Dugme Odjava ispod Email */}
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className={styles.logoutButton}
               style={{ marginTop: 24 }}
             >
@@ -681,6 +703,7 @@ export default function AdminDashboard() {
                         <h3>{product.name}</h3>
                         <p>{product.description}</p>
                         <div className={styles.productPrice}>{product.price} KM</div>
+                        {product.category && <div style={{ color: "#666", fontSize: 14, marginBottom: 8 }}>Kategorija: {product.category}</div>}
                         <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                           <button onClick={() => { setEditProduct(product); setEditModalOpen(true); }} className={styles.productEditButton}>Edit</button>
                           <button onClick={() => setDeleteId(product.id)} className={styles.productDeleteButton}>Delete</button>
@@ -758,7 +781,7 @@ export default function AdminDashboard() {
                   <FileText size={20} /> Nova objava
                 </Link>
               </div>
-              {loading ? (
+              {loadingBlogs ? (
                 <p>Učitavanje blogova...</p>
               ) : blogs.length === 0 ? (
                 <p className={styles.emptyState}>Nema blog objava.</p>
@@ -777,6 +800,7 @@ export default function AdminDashboard() {
                         <p style={{ color: "#888", fontSize: 14, margin: "4px 0" }}>
                           Autor: {blog.author} | {new Date(blog.created_at).toLocaleDateString("bs-BA")}<br/>
                           Komentara: {blog.num_comments} | Ocjena: {blog.avg_rating?.toFixed(1) ?? "-"}
+                          {blog.category && <><br/>Kategorija: {blog.category}</>}
                         </p>
                         <p>{blog.content.slice(0, 100)}...</p>
                         <div style={{ display: "flex", gap: 8, marginLeft: "auto", marginTop: 8 }}>
@@ -813,7 +837,10 @@ export default function AdminDashboard() {
                       <div className={styles.projectContent}>
                         <h3 className={styles.projectTitle}>{project.title}</h3>
                         <p className={styles.projectDescription}>{project.description}</p>
-                        <div className={styles.projectMeta}>{project.created_at ? new Date(project.created_at).toLocaleDateString('bs-BA') : ""}</div>
+                        <div className={styles.projectMeta}>
+                          {project.created_at ? new Date(project.created_at).toLocaleDateString('bs-BA') : ""}
+                          {project.category && <><br/>Kategorija: {project.category}</>}
+                        </div>
                         {/* Delete button bottom right */}
                         <button
                           onClick={() => setDeleteProjectId(project.id)}
