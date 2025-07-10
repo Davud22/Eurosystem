@@ -1,21 +1,24 @@
 from sqlmodel import Session, select
 from models.comment import Comment
-from models.user import User
+from typing import List
 
-def create_comment_repo(db: Session, comment: Comment):
-    db.add(comment)
-    db.commit()
-    db.refresh(comment)
+def create_comment(session: Session, comment: Comment) -> Comment:
+    session.add(comment)
+    session.commit()
+    session.refresh(comment)
     return comment
 
-def get_comments_for_blog_repo(db: Session, blog_id: int):
-    statement = select(Comment, User).where(Comment.blog_id == blog_id, Comment.author_id == User.id)
-    results = db.exec(statement).all()
-    return results
+def get_by_blog_id(session: Session, blog_id: int) -> List[Comment]:
+    statement = select(Comment).where(Comment.blog_id == blog_id).order_by(Comment.created_at)
+    return session.exec(statement).all()
 
-def delete_comment_repo(db: Session, comment_id: int):
-    comment = db.get(Comment, comment_id)
+def get_by_id(session: Session, comment_id: int) -> Comment:
+    return session.get(Comment, comment_id)
+
+def delete_comment(session: Session, comment_id: int) -> bool:
+    comment = get_by_id(session, comment_id)
     if comment:
-        db.delete(comment)
-        db.commit()
-    return comment 
+        session.delete(comment)
+        session.commit()
+        return True
+    return False 

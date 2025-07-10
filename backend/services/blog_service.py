@@ -7,7 +7,8 @@ from repositories.blog_repository import (
     get_blog,
     get_all_blogs,
     delete_blog,
-    update_blog_stats
+    update_blog_stats,
+    get_top_blogs
 )
 from typing import List, Optional
 from uuid import uuid4
@@ -28,8 +29,8 @@ async def save_blog_image_service(file: UploadFile) -> str:
         f.write(content)
     return f"/images/{filename}"
 
-def create_blog_service(db: Session, blog_in: Blog) -> Blog:
-    blog = Blog(**blog_in.dict())
+def create_blog_service(db: Session, blog_in) -> Blog:
+    blog = Blog(**blog_in.model_dump())
     return create_blog(db, blog)
 
 def get_blog_service(db: Session, blog_id: int) -> Optional[Blog]:
@@ -42,4 +43,7 @@ def delete_blog_service(db: Session, blog_id: int) -> bool:
     return delete_blog(db, blog_id)
 
 def update_blog_stats_service(db: Session, blog_id: int, avg_rating: float, num_comments: int) -> Optional[Blog]:
-    return update_blog_stats(db, blog_id, avg_rating, num_comments) 
+    return update_blog_stats(db, blog_id, avg_rating, num_comments)
+
+def get_top_blogs_service(db: Session, limit: int = 3) -> List[Blog]:
+    return get_top_blogs(db, limit) 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session
 from database import get_session
 from schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
@@ -6,7 +6,8 @@ from services.project_service import (
     create_project_service,
     get_project_service,
     get_all_projects_service,
-    delete_project_service
+    delete_project_service,
+    get_latest_projects_service
 )
 from typing import List
 
@@ -19,6 +20,10 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_session)):
 @router.get("/", response_model=List[ProjectRead])
 def list_projects(db: Session = Depends(get_session)):
     return get_all_projects_service(db)
+
+@router.get("/latest", response_model=List[ProjectRead])
+def get_latest_projects(limit: int = Query(3), db: Session = Depends(get_session)):
+    return get_latest_projects_service(db, limit)
 
 @router.get("/{project_id}", response_model=ProjectRead)
 def get_project(project_id: int, db: Session = Depends(get_session)):

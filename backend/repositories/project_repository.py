@@ -32,3 +32,12 @@ def delete_project(session: Session, project_id: int) -> bool:
         session.commit()
         return True
     return False 
+
+def get_latest_projects(session: Session, limit: int = 3) -> List[Project]:
+    statement = select(Project).order_by(Project.created_at.desc()).limit(limit)
+    projects = session.exec(statement).all()
+    for p in projects:
+        if isinstance(p.images, str):
+            import json
+            p.images = json.loads(p.images)
+    return projects 

@@ -5,7 +5,8 @@ from repositories.project_repository import (
     create_project,
     get_project,
     get_all_projects,
-    delete_project
+    delete_project,
+    get_latest_projects
 )
 from typing import List, Optional
 import json
@@ -24,4 +25,7 @@ def get_all_projects_service(db: Session) -> List[Project]:
     return get_all_projects(db)
 
 def delete_project_service(db: Session, project_id: int) -> bool:
-    return delete_project(db, project_id) 
+    return delete_project(db, project_id)
+
+def get_latest_projects_service(db: Session, limit: int = 3) -> List[Project]:
+    return get_latest_projects(db, limit) 

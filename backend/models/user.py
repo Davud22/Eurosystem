@@ -1,7 +1,10 @@
-from sqlmodel import SQLModel, Field
-from typing import Optional
+from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional, List, TYPE_CHECKING
 from enum import Enum
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from .comment import Comment
 
 class UserRole(str, Enum):
     user = "user"
@@ -16,4 +19,6 @@ class User(SQLModel, table=True):
     hashed_password: str
     role: UserRole = Field(default=UserRole.user, nullable=False)
     is_active: bool = Field(default=True, nullable=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow) 
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    comments: List["Comment"] = Relationship(back_populates="author") 

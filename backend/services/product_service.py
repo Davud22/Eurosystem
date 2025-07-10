@@ -12,7 +12,8 @@ from repositories.product_repository import (
     search_products_repository,
     update_product_repository,
     delete_product_repository,
-    product_exists_repository
+    product_exists_repository,
+    get_latest_products_repository
 )
 from typing import List, Optional
 from uuid import uuid4
@@ -67,4 +68,7 @@ def update_product_service(db: Session, product_id: int, product_in: Product) ->
 def delete_product_service(db: Session, product_id: int) -> bool:
     if not product_exists_repository(db, product_id):
         raise HTTPException(status_code=404, detail="Proizvod ne postoji.")
-    return delete_product_repository(db, product_id) 
+    return delete_product_repository(db, product_id)
+
+def get_latest_products_service(db: Session, limit: int = 3) -> List[Product]:
+    return get_latest_products_repository(db, limit) 
