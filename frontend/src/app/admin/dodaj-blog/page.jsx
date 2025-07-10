@@ -149,8 +149,8 @@ export default function DodajBlogPage() {
                 </div>
               </div>
               <div className={styles.blogFormActions}>
-                <button type="button" className={styles.cancelButton} style={{ minWidth: 140, height: 48, textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center" }} onClick={() => router.push("/admin")}>Otkaži</button>
-                <button type="submit" className={styles.submitButton} style={{ minWidth: 140, height: 48, display: "inline-flex", alignItems: "center", justifyContent: "center" }} disabled={uploading}>
+                <button type="button" className={styles.blogCancelButton} onClick={() => router.push("/admin")}>Otkaži</button>
+                <button type="submit" className={styles.blogSubmitButton} disabled={uploading}>
                   {uploading ? "Učitavanje slike..." : "Dodaj blog"}
                 </button>
               </div>

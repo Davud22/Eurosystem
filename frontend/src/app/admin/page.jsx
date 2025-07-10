@@ -21,6 +21,7 @@ import {
 import Header from "../components/Header/Header"
 import styles from "./Admin.module.css"
 import Link from "next/link";
+import { useRef } from "react";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -296,6 +297,38 @@ export default function AdminDashboard() {
       });
   }, []);
 
+  // --- Projects (Radovi) state ---
+  const [projects, setProjects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [deleteProjectId, setDeleteProjectId] = useState(null);
+
+  // Fetch projects
+  useEffect(() => {
+    if (activeTab === "portfolio") {
+      setLoadingProjects(true);
+      fetch(`${BACKEND_URL}/admin/projects`)
+        .then(res => res.json())
+        .then(data => setProjects(data))
+        .catch(() => setProjects([]))
+        .finally(() => setLoadingProjects(false));
+    }
+  }, [activeTab]);
+
+  // Delete project
+  const handleDeleteProject = async (id) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/admin/projects/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      setModal({ open: true, message: "Projekt uspješno obrisan!", type: "success" });
+      setProjects(projects.filter(p => p.id !== id));
+      setDeleteProjectId(null);
+    } catch {
+      setModal({ open: true, message: "Greška pri brisanju projekta!", type: "error" });
+    }
+  };
+
+  // Uklanjam funkciju za update projekata i sve povezano s editiranjem projekata
+
   return (
     <div className={styles.admin}>
       <Header />
@@ -566,7 +599,7 @@ export default function AdminDashboard() {
                         {user.is_active ? (
                           <button 
                             onClick={() => setBlockUserId(user.id)} 
-                            className={styles.blockButton}
+                            className={styles.userBlockButton}
                             title="Blokiraj korisnika"
                           >
                             <UserX size={16} />
@@ -574,7 +607,7 @@ export default function AdminDashboard() {
                         ) : (
                           <button 
                             onClick={() => handleUnblockUser(user.id)} 
-                            className={styles.unblockButton}
+                            className={styles.userUnblockButton}
                             title="Aktiviraj korisnika"
                           >
                             <UserCheck size={16} />
@@ -582,7 +615,7 @@ export default function AdminDashboard() {
                         )}
                         <button 
                           onClick={() => setDeleteUserId(user.id)} 
-                          className={styles.deleteButton}
+                          className={styles.userDeleteButton}
                           title="Obriši korisnika"
                         >
                           <Trash2 size={16} />
@@ -649,8 +682,8 @@ export default function AdminDashboard() {
                         <p>{product.description}</p>
                         <div className={styles.productPrice}>{product.price} KM</div>
                         <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
-                          <button onClick={() => { setEditProduct(product); setEditModalOpen(true); }} className={styles.editButton}>Edit</button>
-                          <button onClick={() => setDeleteId(product.id)} className={styles.deleteButton}>Delete</button>
+                          <button onClick={() => { setEditProduct(product); setEditModalOpen(true); }} className={styles.productEditButton}>Edit</button>
+                          <button onClick={() => setDeleteId(product.id)} className={styles.productDeleteButton}>Delete</button>
                         </div>
                       </div>
                     </div>
@@ -759,16 +792,54 @@ export default function AdminDashboard() {
 
           {activeTab === "portfolio" && (
             <div className={styles.portfolioSection}>
-              <div className={styles.sectionHeader}>
+              <div className={styles.portfolioHeader}>
                 <h1 className={styles.pageTitle}>Naši radovi</h1>
-                <button className={styles.addButton}>
-                  <Camera size={20} />
-                  Dodaj projekt
-                </button>
+                <Link href="/admin/dodaj-projekat" className={styles.submitButton} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Camera size={20} /> Dodaj projekt
+                </Link>
               </div>
-              <p className={styles.emptyState}>
-                Ovdje će biti galerija projekata sa opcijama za dodavanje slika i opisa.
-              </p>
+              {modal.open && (
+                <div style={{ background: modal.type === "success" ? "#e0ffe0" : "#fee2e2", color: modal.type === "success" ? "#0a0" : "#b91c1c", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center", fontWeight: 500 }}>{modal.message}</div>
+              )}
+              {loadingProjects ? (
+                <div>Učitavanje...</div>
+              ) : projects.length === 0 ? (
+                <div style={{ textAlign: "center", color: "#aaa", marginTop: 48 }}>Nema radova. Dodajte prvi projekt!</div>
+              ) : (
+                <div className={styles.projectGrid}>
+                  {projects.map((project) => (
+                    <div key={project.id} className={styles.projectCard} style={{ position: 'relative' }}>
+                      <ProjectImages images={project.images} />
+                      <div className={styles.projectContent}>
+                        <h3 className={styles.projectTitle}>{project.title}</h3>
+                        <p className={styles.projectDescription}>{project.description}</p>
+                        <div className={styles.projectMeta}>{project.created_at ? new Date(project.created_at).toLocaleDateString('bs-BA') : ""}</div>
+                        {/* Delete button bottom right */}
+                        <button
+                          onClick={() => setDeleteProjectId(project.id)}
+                          className={styles.deleteButton}
+                          style={{ position: 'absolute', right: 18, bottom: 18, zIndex: 2 }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Modal za edit */}
+              {/* Potvrda za delete */}
+              {deleteProjectId && (
+                <div className={styles.modalOverlay}>
+                  <div className={styles.modalContent}>
+                    <h3>Jeste li sigurni da želite obrisati projekt?</h3>
+                    <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                      <button onClick={() => handleDeleteProject(deleteProjectId)} className={styles.deleteButton}>Obriši</button>
+                      <button onClick={() => setDeleteProjectId(null)} className={styles.cancelButton}>Otkaži</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -803,4 +874,54 @@ export default function AdminDashboard() {
       </div>
     </div>
   )
+}
+
+function ProjectImages({ images }) {
+  const [mainIdx, setMainIdx] = useState(0);
+  if (!images || images.length === 0) {
+    return <div className={styles.projectImagePlaceholder}>Nema slike</div>;
+  }
+  const mainImage = images[mainIdx]?.startsWith("/images/") ? `http://localhost:8000${images[mainIdx]}` : images[mainIdx];
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%", marginBottom: 12, padding: 12 }}>
+      <div style={{
+        width: 240,
+        height: 150,
+        borderRadius: 12,
+        background: "#f3f4f6",
+        border: "1.5px solid #e5e7eb",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 10,
+        overflow: "hidden"
+      }}>
+        <img src={mainImage} alt="slika projekta" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      </div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", padding: 4 }}>
+        {images.map((img, idx) => (
+          <div key={idx} style={{
+            width: 48,
+            height: 32,
+            borderRadius: 6,
+            border: idx === mainIdx ? "2px solid #3b82f6" : "1.5px solid #e5e7eb",
+            overflow: "hidden",
+            cursor: "pointer",
+            background: "#f3f4f6",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+            onClick={() => setMainIdx(idx)}
+          >
+            <img
+              src={img.startsWith("/images/") ? `http://localhost:8000${img}` : img}
+              alt="slika projekta"
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
