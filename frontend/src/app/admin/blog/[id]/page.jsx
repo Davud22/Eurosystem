@@ -47,7 +47,7 @@ export default function BlogDetailPage() {
       setTimeout(() => {
         setModal({ open: false, message: "" });
         router.push("/admin?tab=blog");
-      }, 1500);
+      }, 1200);
     } catch {
       setModal({ open: true, message: "Greška pri brisanju!", type: "error" });
       setTimeout(() => setModal({ open: false, message: "" }), 2000);
@@ -89,10 +89,10 @@ export default function BlogDetailPage() {
               </div>
               <div style={{ fontSize: 22, marginBottom: 24, lineHeight: 1.6 }}>{blog.content}</div>
               <div style={{ display: "flex", gap: 32, marginTop: 32, justifyContent: "center", alignItems: "center" }}>
-                <button className={`${styles.blockButton} ${styles.bigActionButton}`} onClick={() => { setShowComments(true); fetchComments(); }}>
+                <button className={styles.blogActionButton} onClick={() => { setShowComments(true); fetchComments(); }}>
                   <MessageSquare size={22} style={{ marginRight: 10 }} /> Komentari
                 </button>
-                <button className={`${styles.deleteButton} ${styles.bigActionButton}`} onClick={() => setShowDelete(true)}>
+                <button className={styles.blogDeleteButton} onClick={() => setShowDelete(true)}>
                   <Trash2 size={22} style={{ marginRight: 10 }} /> Obriši
                 </button>
               </div>
@@ -115,7 +115,7 @@ export default function BlogDetailPage() {
                         <div style={{ fontWeight: 700, fontSize: 19, marginBottom: 2 }}>{comment.author_full_name}</div>
                         <div style={{ color: "#888", fontSize: 15 }}>{new Date(comment.created_at).toLocaleString("bs-BA")}</div>
                         <div style={{ marginTop: 8, fontSize: 18 }}>{comment.content}</div>
-                        <button onClick={() => handleDeleteComment(comment.id)} className={styles.deleteButton} style={{ marginTop: 10, fontSize: 15, padding: "7px 18px", borderRadius: 8 }}>Obriši</button>
+                        <button onClick={() => handleDeleteComment(comment.id)} className={styles.blogCommentDeleteButton} style={{ marginTop: 10, fontSize: 15, padding: "7px 18px", borderRadius: 8 }}>Obriši</button>
                       </div>
                     ))}
                   </div>
@@ -129,17 +129,19 @@ export default function BlogDetailPage() {
               <div className={styles.modalContent} style={{ maxWidth: 520, minHeight: 220, padding: 48, borderRadius: 18, textAlign: "center" }}>
                 <h3 style={{ fontSize: 28, fontWeight: 800, marginBottom: 18 }}>Jeste li sigurni da želite obrisati ovaj blog?</h3>
                 <div style={{ display: "flex", gap: 18, marginTop: 32, justifyContent: "center" }}>
-                  <button onClick={handleDelete} className={styles.deleteButton} style={{ fontSize: 19, padding: "12px 32px", borderRadius: 10 }}>Obriši</button>
+                  <button onClick={handleDelete} className={styles.blogDeleteButton} style={{ fontSize: 19, padding: "12px 32px", borderRadius: 10 }}>Obriši</button>
                   <button onClick={() => setShowDelete(false)} className={styles.cancelButton} style={{ fontSize: 19, padding: "12px 32px", borderRadius: 10 }}>Otkaži</button>
                 </div>
               </div>
             </div>
           )}
           {/* MODAL PORUKA */}
-          
+          {modal.open && (
+            <div style={{ background: modal.type === "success" ? "#e0ffe0" : "#fee2e2", color: modal.type === "success" ? "#0a0" : "#b91c1c", padding: 12, borderRadius: 8, margin: "24px auto", textAlign: "center", fontWeight: 500, maxWidth: 400 }}>{modal.message}</div>
+          )}
         </div>
       </main>
-      {/* Uklonjen <Footer /> */}
+      <Footer />
     </div>
   );
 } 
