@@ -6,12 +6,14 @@ class ProjectCreate(BaseModel):
     title: str
     description: str
     images: List[str] = []
+    category: Optional[str] = None
 
 class ProjectRead(BaseModel):
     id: int
     title: str
     description: str
     images: List[str]
+    category: Optional[str]
     created_at: datetime
 
     @field_validator("images", mode="before")
@@ -27,4 +29,5 @@ class ProjectRead(BaseModel):
 
 class ProjectUpdate(BaseModel):
     title: Optional[str] = None
-    description: Optional[str] = None 
+    description: Optional[str] = None
+    category: Optional[str] = None 

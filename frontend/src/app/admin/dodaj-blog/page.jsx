@@ -14,7 +14,8 @@ export default function DodajBlogPage() {
     title: "",
     content: "",
     image_url: "",
-    author: "Admin"
+    author: "Admin",
+    category: ""
   });
   const [imagePreview, setImagePreview] = useState("");
   const [modal, setModal] = useState({ open: false, message: "", type: "success" });
@@ -73,6 +74,14 @@ export default function DodajBlogPage() {
     }
   };
 
+  const categories = [
+    "Videonadzor",
+    "Alarmni sistemi",
+    "Kapije",
+    "Klima uređaji",
+    "Elektroinstalacioni radovi"
+  ]
+
   return (
     <div className={styles.page}>
       <Header />
@@ -128,6 +137,23 @@ export default function DodajBlogPage() {
                   className={styles.input}
                   placeholder="Unesite ime autora"
                 />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="category" className={styles.label}>Kategorija</label>
+                <select
+                  id="category"
+                  name="category"
+                  value={form.category}
+                  onChange={handleChange}
+                  className={styles.input}
+                >
+                  <option value="">Odaberite kategoriju</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Slika bloga</label>

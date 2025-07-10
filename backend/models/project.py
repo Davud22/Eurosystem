@@ -7,4 +7,5 @@ class Project(SQLModel, table=True):
     title: str
     description: str
     images: str = Field(default="[]")  # JSON string (list of image URLs)
+    category: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow) 

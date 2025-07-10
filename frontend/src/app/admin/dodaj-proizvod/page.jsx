@@ -24,12 +24,11 @@ export default function DodajProizvodPage() {
   const [modal, setModal] = useState({ open: false, message: "" });
 
   const categories = [
-    "Alarmni sistemi",
     "Videonadzor",
-    "Pametne instalacije",
-    "Kućni sistemi",
-    "Poslovni sistemi",
-    "Održavanje",
+    "Alarmni sistemi",
+    "Kapije", 
+    "Klima uređaji",
+    "Elektroinstalacioni radovi"
   ]
 
   const handleSubmit = async (e) => {

@@ -12,6 +12,7 @@ export default function DodajProjekatPage() {
     title: "",
     description: "",
     images: [],
+    category: ""
   });
   const [mainImageIdx, setMainImageIdx] = useState(0);
   const [dragActive, setDragActive] = useState(false);
@@ -90,6 +91,7 @@ export default function DodajProjekatPage() {
         title: formData.title,
         description: formData.description,
         images: formData.images.map((img) => img.url),
+        category: formData.category
       };
       const res = await fetch(`${BACKEND_URL}/admin/projects`, {
         method: "POST",
@@ -110,6 +112,13 @@ export default function DodajProjekatPage() {
 
   // --- Prikaz slike i thumbnails ---
   const mainImage = formData.images[mainImageIdx]?.url;
+  const categories = [
+    "Videonadzor",
+    "Alarmni sistemi",
+    "Kapije",
+    "Klima uređaji",
+    "Elektroinstalacioni radovi"
+  ]
 
   return (
     <div className={styles.page}>
@@ -154,6 +163,23 @@ export default function DodajProjekatPage() {
                 className={styles.textarea}
                 placeholder="Unesite opis projekta..."
               />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="category" className={styles.label}>Kategorija</label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className={styles.input}
+              >
+                <option value="">Odaberite kategoriju</option>
+                {categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className={styles.formGroup}>
               <label className={styles.label}>Slike projekta</label>

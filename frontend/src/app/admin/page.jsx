@@ -242,6 +242,13 @@ export default function AdminDashboard() {
   // Modal za uređivanje proizvoda
   function EditProductModal({ product, onSave, onClose }) {
     const [form, setForm] = useState({ ...product });
+    const categories = [
+      "Videonadzor",
+      "Alarmni sistemi",
+      "Kapije", 
+      "Klima uređaji",
+      "Elektroinstalacioni radovi"
+    ]
     return (
       <div className={styles.modalOverlay}>
         <div className={styles.modalContent}>
@@ -681,6 +688,7 @@ export default function AdminDashboard() {
                         <h3>{product.name}</h3>
                         <p>{product.description}</p>
                         <div className={styles.productPrice}>{product.price} KM</div>
+                        {product.category && <div style={{ color: "#666", fontSize: 14, marginBottom: 8 }}>Kategorija: {product.category}</div>}
                         <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                           <button onClick={() => { setEditProduct(product); setEditModalOpen(true); }} className={styles.productEditButton}>Edit</button>
                           <button onClick={() => setDeleteId(product.id)} className={styles.productDeleteButton}>Delete</button>
@@ -777,6 +785,7 @@ export default function AdminDashboard() {
                         <p style={{ color: "#888", fontSize: 14, margin: "4px 0" }}>
                           Autor: {blog.author} | {new Date(blog.created_at).toLocaleDateString("bs-BA")}<br/>
                           Komentara: {blog.num_comments} | Ocjena: {blog.avg_rating?.toFixed(1) ?? "-"}
+                          {blog.category && <><br/>Kategorija: {blog.category}</>}
                         </p>
                         <p>{blog.content.slice(0, 100)}...</p>
                         <div style={{ display: "flex", gap: 8, marginLeft: "auto", marginTop: 8 }}>
@@ -813,7 +822,10 @@ export default function AdminDashboard() {
                       <div className={styles.projectContent}>
                         <h3 className={styles.projectTitle}>{project.title}</h3>
                         <p className={styles.projectDescription}>{project.description}</p>
-                        <div className={styles.projectMeta}>{project.created_at ? new Date(project.created_at).toLocaleDateString('bs-BA') : ""}</div>
+                        <div className={styles.projectMeta}>
+                          {project.created_at ? new Date(project.created_at).toLocaleDateString('bs-BA') : ""}
+                          {project.category && <><br/>Kategorija: {project.category}</>}
+                        </div>
                         {/* Delete button bottom right */}
                         <button
                           onClick={() => setDeleteProjectId(project.id)}
