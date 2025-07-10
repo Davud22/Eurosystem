@@ -5,10 +5,13 @@ import { ArrowLeft, Upload, X, Plus } from "lucide-react"
 import Header from "../../components/Header/Header"
 import Link from "next/link"
 import styles from "./DodajProizvod.module.css"
+import { useAuth } from "../../../hooks/useAuth"
 
 const BACKEND_URL = "http://localhost:8000";
 
 export default function DodajProizvodPage() {
+  // Prvo svi hooks - redoslijed mora biti konzistentan
+  const { user, loading, error, logout } = useAuth('admin')
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -22,6 +25,26 @@ export default function DodajProizvodPage() {
 
   const [dragActive, setDragActive] = useState(false)
   const [modal, setModal] = useState({ open: false, message: "" });
+
+  // Ako se učitava, prikaži loading
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Učitavanje...
+      </div>
+    )
+  }
+
+  // Ako nema korisnika, neće se prikazati (useAuth će preusmjeriti)
+  if (!user) {
+    return null
+  }
 
   const categories = [
     "Videonadzor",

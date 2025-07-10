@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlmodel import Session
 from schemas.user import UserCreate, UserLogin, UserOut, Token, UserGoogleLogin
-from models.user import UserRole
+from models.user import UserRole, User
 from services import user_service
-from services.jwt_service import create_access_token
+from services.jwt_service import create_access_token, get_current_user
 from database import get_session
 import os
 import time
@@ -27,6 +27,10 @@ def is_rate_limited(ip: str) -> bool:
     reset_attempts[ip].append(now)
     return False
 
+@router.get("/me", response_model=UserOut)
+def get_current_user_info(current_user: User = Depends(get_current_user)):
+    return current_user
+
 @router.post("/register", response_model=UserOut)
 def register(user_in: UserCreate, session: Session = Depends(get_session)):
     return user_service.create_user(
@@ -34,7 +38,7 @@ def register(user_in: UserCreate, session: Session = Depends(get_session)):
         first_name=user_in.first_name,
         last_name=user_in.last_name,
         email=user_in.email,
-        phone=user_in.phone,
+        phone=user_in.phone or "",
         password=user_in.password,
         role=UserRole.user
     )

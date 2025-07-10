@@ -6,10 +6,13 @@ import styles from "../Admin.module.css";
 import { Upload, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../../../hooks/useAuth";
 
 const BACKEND_URL = "http://localhost:8000";
 
 export default function DodajBlogPage() {
+  // Prvo svi hooks - redoslijed mora biti konzistentan
+  const { user, loading, error, logout } = useAuth('admin')
   const [form, setForm] = useState({
     title: "",
     content: "",
@@ -22,6 +25,26 @@ export default function DodajBlogPage() {
   const [uploading, setUploading] = useState(false);
 
   const router = useRouter();
+
+  // Ako se učitava, prikaži loading
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Učitavanje...
+      </div>
+    )
+  }
+
+  // Ako nema korisnika, neće se prikazati (useAuth će preusmjeriti)
+  if (!user) {
+    return null
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;

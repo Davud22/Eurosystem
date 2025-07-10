@@ -4,10 +4,13 @@ import Header from "../../components/Header/Header";
 import styles from "../dodaj-proizvod/DodajProizvod.module.css";
 import { Upload, X, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "../../../hooks/useAuth";
 
 const BACKEND_URL = "http://localhost:8000";
 
 export default function DodajProjekatPage() {
+  // Prvo svi hooks - redoslijed mora biti konzistentan
+  const { user, loading, error, logout } = useAuth('admin')
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -18,6 +21,26 @@ export default function DodajProjekatPage() {
   const [dragActive, setDragActive] = useState(false);
   const [modal, setModal] = useState({ open: false, message: "" });
   const [uploading, setUploading] = useState(false);
+
+  // Ako se učitava, prikaži loading
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Učitavanje...
+      </div>
+    )
+  }
+
+  // Ako nema korisnika, neće se prikazati (useAuth će preusmjeriti)
+  if (!user) {
+    return null
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;

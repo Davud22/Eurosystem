@@ -1,0 +1,112 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.content {
+  background: white;
+  padding: 3rem 2rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.icon {
+  margin-bottom: 2rem;
+  color: #ef4444;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.description {
+  font-size: 1.125rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.homeButton,
+.loginButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.homeButton {
+  background: #3b82f6;
+  color: white;
+}
+
+.homeButton:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.loginButton {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.loginButton:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .content {
+    background: #1f2937;
+    color: white;
+  }
+  
+  .title {
+    color: white;
+  }
+  
+  .description {
+    color: #d1d5db;
+  }
+  
+  .loginButton {
+    background: #374151;
+    color: white;
+    border-color: #4b5563;
+  }
+  
+  .loginButton:hover {
+    background: #4b5563;
+  }
+} 
