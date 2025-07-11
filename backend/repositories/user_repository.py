@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from models.user import User, UserRole
+from models.user import User, UserRole, ContactMessage
 from typing import Optional, List
 
 def get_by_email(session: Session, email: str) -> Optional[User]:
@@ -42,3 +42,9 @@ def delete_user(session: Session, user_id: int) -> bool:
 
 def user_exists(session: Session, email: str) -> bool:
     return get_by_email(session, email) is not None 
+
+def create_contact_message(session: Session, contact: ContactMessage) -> ContactMessage:
+    session.add(contact)
+    session.commit()
+    session.refresh(contact)
+    return contact 

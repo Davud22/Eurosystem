@@ -470,3 +470,20 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+.logoutButton {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px 0;
+  background: #222b3a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.logoutButton:hover {
+  background: #1a2230;
+}

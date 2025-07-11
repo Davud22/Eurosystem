@@ -21,4 +21,12 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=True, nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    comments: List["Comment"] = Relationship(back_populates="author") 
+    comments: List["Comment"] = Relationship(back_populates="author")
+
+class ContactMessage(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    email: str
+    phone: Optional[str] = None
+    message: str
+    created_at: datetime = Field(default_factory=datetime.utcnow) 
