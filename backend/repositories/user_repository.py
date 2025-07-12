@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from models.user import User, UserRole, ContactMessage
 from typing import Optional, List
 
@@ -48,3 +48,15 @@ def create_contact_message(session: Session, contact: ContactMessage) -> Contact
     session.commit()
     session.refresh(contact)
     return contact 
+
+def get_order_count_by_user(db: Session, user_id: int) -> int:
+    from models.order import Order
+    return db.query(func.count()).select_from(Order).filter(Order.user_id == user_id).scalar()
+
+def get_wishlist_count_by_user(db: Session, user_id: int) -> int:
+    from models.wishlist import Wishlist
+    return db.query(func.count()).select_from(Wishlist).filter(Wishlist.user_id == user_id).scalar()
+
+def get_cart_count_by_user(db: Session, user_id: int) -> int:
+    from models.cart import Cart
+    return db.query(func.count()).select_from(Cart).filter(Cart.user_id == user_id).scalar() 

@@ -6,8 +6,12 @@ from services import user_service
 from services.jwt_service import get_current_user
 from database import get_session
 from datetime import datetime
+from services.user_service import get_user_dashboard_stats
 
 router = APIRouter(prefix="/user", tags=["user"])
+
+def get_current_user_id(user=Depends(get_current_user)):
+    return user.id
 
 @router.get("/me", response_model=UserOut)
 def get_my_profile(current_user: User = Depends(get_current_user)):
@@ -34,4 +38,8 @@ def create_contact_message(
     session: Session = Depends(get_session)
 ):
     user_service.create_contact_message(session, data.name, data.email, data.phone, data.message)
-    return {"message": "Poruka uspješno poslana."} 
+    return {"message": "Poruka uspješno poslana."}
+
+@router.get("/dashboard-stats")
+def get_dashboard_stats(db: Session = Depends(get_session), user_id: int = Depends(get_current_user_id)):
+    return get_user_dashboard_stats(db, user_id) 

@@ -3,6 +3,7 @@ from sqlalchemy.orm import selectinload
 from models.cart import Cart
 from typing import List, Optional
 from models.wishlist import Wishlist
+from sqlalchemy import text
 
 def add_to_cart_repository(db: Session, user_id: int, product_id: int, quantity: int = 1) -> Cart:
     cart_item = db.exec(select(Cart).where(Cart.user_id == user_id, Cart.product_id == product_id)).first()
@@ -55,3 +56,7 @@ def remove_from_wishlist_repository(db: Session, user_id: int, product_id: int) 
 def get_wishlist_by_user_repository(db: Session, user_id: int):
     statement = select(Wishlist).where(Wishlist.user_id == user_id).options(selectinload(Wishlist.product))
     return db.exec(statement).all() 
+
+def clear_cart_by_user_repository(db: Session, user_id: int):
+    db.execute(text("DELETE FROM cart WHERE user_id = :user_id"), {"user_id": user_id})
+    db.commit() 

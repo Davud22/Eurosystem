@@ -13,6 +13,8 @@ export default function UserDashboard() {
   const [saving, setSaving] = useState(false)
   const formRef = useRef(null)
   const [wishlist, setWishlist] = useState([])
+  const [orders, setOrders] = useState([])
+  const [dashboardStats, setDashboardStats] = useState({orders: 0, wishlist: 0, cart: 0, messages: 2})
 
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
 
@@ -46,6 +48,18 @@ export default function UserDashboard() {
       })
         .then(res => res.json())
         .then(data => setWishlist(data))
+      // Fetch orders
+      fetch(`${BACKEND_URL}/orders/my`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => setOrders(data))
+      // Fetch dashboard stats
+      fetch(`${BACKEND_URL}/user/dashboard-stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => setDashboardStats(data))
     }
   }, [])
 
@@ -202,7 +216,7 @@ export default function UserDashboard() {
           {activeTab === "overview" && (
             <div className={styles.overview}>
               <div className={styles.welcome}>
-                <h1 className={styles.welcomeTitle}>Zdravo, Emrah! 👋</h1>
+                <h1 className={styles.welcomeTitle}>Zdravo, {user ? `${user.first_name} ${user.last_name}` : ""}! 👋</h1>
                 <p className={styles.welcomeText}>Dobrodošli nazad u vaš Eurosystem korisnički panel</p>
               </div>
 
@@ -212,7 +226,7 @@ export default function UserDashboard() {
                     <ShoppingBag size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{stats.orders}</h3>
+                    <h3 className={styles.statNumber}>{dashboardStats.orders}</h3>
                     <p className={styles.statLabel}>Narudžbe</p>
                   </div>
                 </div>
@@ -221,7 +235,7 @@ export default function UserDashboard() {
                     <Heart size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{stats.wishlist}</h3>
+                    <h3 className={styles.statNumber}>{dashboardStats.wishlist}</h3>
                     <p className={styles.statLabel}>Lista želja</p>
                   </div>
                 </div>
@@ -230,17 +244,17 @@ export default function UserDashboard() {
                     <MessageCircle size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{stats.messages}</h3>
+                    <h3 className={styles.statNumber}>{dashboardStats.messages}</h3>
                     <p className={styles.statLabel}>Poruke</p>
                   </div>
                 </div>
                 <div className={styles.statCard}>
                   <div className={styles.statIcon}>
-                    <Star size={24} />
+                    <ShoppingCart size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{stats.reviews}</h3>
-                    <p className={styles.statLabel}>Recenzije</p>
+                    <h3 className={styles.statNumber}>{dashboardStats.cart}</h3>
+                    <p className={styles.statLabel}>Korpa</p>
                   </div>
                 </div>
               </div>
@@ -249,41 +263,43 @@ export default function UserDashboard() {
                 <div className={styles.recentOrders}>
                   <h2 className={styles.sectionTitle}>Nedavne narudžbe</h2>
                   <div className={styles.ordersList}>
-                    {recentOrders.map((order) => (
-                      <div key={order.id} className={styles.orderItem}>
-                        <div className={styles.orderInfo}>
-                          <h4 className={styles.orderProduct}>{order.product}</h4>
-                          <p className={styles.orderId}>#{order.id}</p>
+                    {orders.length === 0 ? (
+                      <div className={styles.emptyState}>Nemate narudžbi.</div>
+                    ) : (
+                      orders.slice(-3).reverse().map((order) => (
+                        <div key={order.id} className={styles.orderItem}>
+                          <div className={styles.orderInfo}>
+                            <h4 className={styles.orderProduct}>{order.items[0]?.product?.name || `Narudžba #${order.code}`}</h4>
+                            <p className={styles.orderId}>#{order.code}</p>
+                          </div>
+                          <div className={styles.orderMeta}>
+                            <span
+                              className={`${styles.orderStatus} ${order.status === "isporučena" ? styles.delivered : styles.processing}`}
+                            >
+                              {order.status}
+                            </span>
+                            <span className={styles.orderDate}>{new Date(order.created_at).toLocaleDateString()}</span>
+                            <span className={styles.orderAmount}>{order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)} KM</span>
+                          </div>
                         </div>
-                        <div className={styles.orderMeta}>
-                          <span
-                            className={`${styles.orderStatus} ${
-                              order.status === "Isporučeno" ? styles.delivered : styles.processing
-                            }`}
-                          >
-                            {order.status}
-                          </span>
-                          <span className={styles.orderDate}>{order.date}</span>
-                          <span className={styles.orderAmount}>{order.amount}</span>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
 
                 <div className={styles.recommendations}>
                   <h2 className={styles.sectionTitle}>Preporučeno za vas</h2>
                   <div className={styles.productsList}>
-                    {recommendedProducts.map((product) => (
-                      <div key={product.id} className={styles.productItem}>
+                    {wishlist.slice(0, 2).map((item) => (
+                      <div key={item.id} className={styles.productItem}>
                         <img
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.name}
+                          src={item.product?.image_url ? (item.product.image_url.startsWith('/images/') ? `http://localhost:8000${item.product.image_url}` : item.product.image_url) : "/placeholder.svg"}
+                          alt={item.product?.name}
                           className={styles.productImage}
                         />
                         <div className={styles.productInfo}>
-                          <h4 className={styles.productName}>{product.name}</h4>
-                          <p className={styles.productPrice}>{product.price}</p>
+                          <h4 className={styles.productName}>{item.product?.name}</h4>
+                          <p className={styles.productPrice}>{item.product?.price} KM</p>
                         </div>
                       </div>
                     ))}
@@ -297,25 +313,38 @@ export default function UserDashboard() {
             <div className={styles.ordersSection}>
               <h1 className={styles.pageTitle}>Moje narudžbe</h1>
               <div className={styles.ordersList}>
-                {recentOrders.map((order) => (
-                  <div key={order.id} className={styles.orderCard}>
-                    <div className={styles.orderHeader}>
-                      <h3 className={styles.orderProduct}>{order.product}</h3>
-                      <span
-                        className={`${styles.orderStatus} ${
-                          order.status === "Isporučeno" ? styles.delivered : styles.processing
-                        }`}
-                      >
-                        {order.status}
-                      </span>
+                {orders.length === 0 ? (
+                  <div className={styles.emptyState}>Nemate narudžbi.</div>
+                ) : (
+                  orders.map((order) => (
+                    <div key={order.id} className={styles.orderCard}>
+                      <div className={styles.orderHeader}>
+                        <div>
+                          <span className={styles.orderProduct}>Narudžba: #{order.code}</span>
+                          <span className={styles.orderDate} style={{marginLeft: 16}}>{new Date(order.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <span
+                          className={`${styles.orderStatus} ${order.status === "isporučena" ? styles.delivered : order.status === "u izradi" ? styles.processing : styles.rejected}`}
+                        >
+                          {order.status}
+                        </span>
+                      </div>
+                      <div className={styles.orderDetails}>
+                        <b>Stavke narudžbe:</b>
+                        <ul style={{margin: '0.5em 0 0 1em', padding: 0}}>
+                          {order.items.map(item => (
+                            <li key={item.id}>
+                              {item.product?.name || 'Proizvod'} x{item.quantity} – {item.price} KM
+                            </li>
+                          ))}
+                        </ul>
+                        <div style={{marginTop: '1em', fontWeight: 600}}>
+                          Ukupno: {order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)} KM
+                        </div>
+                      </div>
                     </div>
-                    <div className={styles.orderDetails}>
-                      <p>Narudžba: #{order.id}</p>
-                      <p>Datum: {order.date}</p>
-                      <p>Iznos: {order.amount}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}
