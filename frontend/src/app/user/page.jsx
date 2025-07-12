@@ -1,34 +1,73 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { User, ShoppingBag, Heart, MessageCircle, Settings, Star, TrendingUp } from "lucide-react"
 import Header from "../components/Header/Header"
 import styles from "./User.module.css"
-import { useAuth } from "../../hooks/useAuth"
 
 export default function UserDashboard() {
-  // Prvo svi hooks - redoslijed mora biti konzistentan
-  const { user, loading, error, logout } = useAuth('user')
   const [activeTab, setActiveTab] = useState("overview")
+  const [user, setUser] = useState(null)
+  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "" })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const formRef = useRef(null)
 
-  // Ako se učitava, prikaži loading
-  if (loading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        fontSize: '18px'
-      }}>
-        Učitavanje...
-      </div>
-    )
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+
+  useEffect(() => {
+    async function fetchUser() {
+      setLoading(true)
+      const token = localStorage.getItem("access_token")
+      const res = await fetch(`${BACKEND_URL}/user/me`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setUser(data)
+        setForm({
+          first_name: data.first_name || "",
+          last_name: data.last_name || "",
+          email: data.email || "",
+          phone: data.phone || ""
+        })
+      }
+      setLoading(false)
+    }
+    fetchUser()
+  }, [])
+
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  // Ako nema korisnika, neće se prikazati (useAuth će preusmjeriti)
-  if (!user) {
-    return null
+  async function handleSave(e) {
+    e.preventDefault()
+    setSaving(true)
+    const token = localStorage.getItem("access_token")
+    const res = await fetch(`${BACKEND_URL}/user/me`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify(form)
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setUser(data)
+      // Optionally show success
+    }
+    setSaving(false)
+  }
+
+  function logout() {
+    localStorage.removeItem("access_token");
+    fetch("/api/logout").then(() => {
+      window.location.replace("/prijava");
+    });
   }
 
   const stats = {
@@ -70,39 +109,9 @@ export default function UserDashboard() {
     },
   ]
 
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    // Ukloni i cookie
-    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    fetch("/api/logout").then(() => {
-      window.location.replace("/prijava");
-    });
-  }
-
   return (
     <div className={styles.userDashboard}>
       <Header />
-
-      <button
-        onClick={handleLogout}
-        style={{
-          position: 'fixed',
-          bottom: 40,
-          right: 40,
-          zIndex: 9999,
-          padding: '16px 32px',
-          background: '#ff3333',
-          color: '#fff',
-          border: '2px solid #222',
-          borderRadius: 12,
-          fontWeight: 'bold',
-          fontSize: 22,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
-          cursor: 'pointer'
-        }}
-      >
-        Odjava
-      </button>
 
       <div className={styles.container}>
         <div className={styles.sidebar}>
@@ -111,8 +120,8 @@ export default function UserDashboard() {
               <User size={32} />
             </div>
             <div className={styles.userInfo}>
-              <h3 className={styles.userName}>Emrah Fazlić</h3>
-              <p className={styles.userEmail}>emrah@example.com</p>
+              <h3 className={styles.userName}>{user ? `${user.first_name} ${user.last_name}` : ""}</h3>
+              <p className={styles.userEmail}>{user ? user.email : ""}</p>
               <span className={styles.userRole}>Korisnik</span>
             </div>
           </div>
@@ -154,6 +163,7 @@ export default function UserDashboard() {
               Moj profil
             </button>
           </nav>
+          <button onClick={logout} className={styles.logoutButton}>Odjava</button>
         </div>
 
         <main className={styles.main}>
@@ -309,25 +319,25 @@ export default function UserDashboard() {
           {activeTab === "profile" && (
             <div className={styles.profileSection}>
               <h1 className={styles.pageTitle}>Moj profil</h1>
-              <div className={styles.profileForm}>
+              <form className={styles.profileForm} onSubmit={handleSave} ref={formRef}>
                 <div className={styles.formGroup}>
-                  <label>Ime i prezime</label>
-                  <input type="text" defaultValue="Emrah Fazlić" />
+                  <label>Ime</label>
+                  <input name="first_name" value={form.first_name} onChange={handleChange} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Prezime</label>
+                  <input name="last_name" value={form.last_name} onChange={handleChange} />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Email</label>
-                  <input type="email" defaultValue="emrah@example.com" />
+                  <input name="email" value={form.email} onChange={handleChange} />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Telefon</label>
-                  <input type="tel" defaultValue="+381 64 123 4567" />
+                  <input name="phone" value={form.phone} onChange={handleChange} />
                 </div>
-                <div className={styles.formGroup}>
-                  <label>Adresa</label>
-                  <input type="text" defaultValue="Beograd, Srbija" />
-                </div>
-                <button className={styles.saveButton}>Sačuvaj izmjene</button>
-              </div>
+                <button className={styles.saveButton} type="submit" disabled={saving}>{saving ? "Čuvam..." : "Sačuvaj izmjene"}</button>
+              </form>
             </div>
           )}
         </main>

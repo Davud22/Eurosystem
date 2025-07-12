@@ -11,11 +11,39 @@ export default function ContactSection() {
     phone: "",
     message: "",
   })
+  const [sending, setSending] = useState(false)
+  const [success, setSuccess] = useState("")
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e) => {
+  const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Handle form submission
-    console.log("Form submitted:", formData)
+    setSending(true)
+    setSuccess("")
+    setError("")
+    try {
+      const res = await fetch(`${BACKEND_URL}/user/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          message: formData.message
+        })
+      })
+      if (res.ok) {
+        setSuccess("Poruka je uspješno poslana!")
+        setFormData({ name: "", email: "", phone: "", message: "" })
+      } else {
+        const data = await res.json()
+        setError(data.detail || "Greška pri slanju poruke.")
+      }
+    } catch (err) {
+      setError("Greška pri slanju poruke.")
+    }
+    setSending(false)
   }
 
   const handleChange = (e) => {
@@ -36,55 +64,42 @@ export default function ContactSection() {
         <div className={styles.content}>
           <div className={styles.contactInfo}>
             <h3 className={styles.infoTitle}>Informacije</h3>
-
             <div className={styles.infoItem}>
               <MapPin className={styles.infoIcon} />
               <div>
                 <h4 className={styles.infoLabel}>Adresa</h4>
                 <p className={styles.infoText}>
-                  Bulevar Kralja Aleksandra 73
-                  <br />
-                  11000 Beograd, Srbija
+                  Bulevar Kralja Aleksandra 73<br />11000 Beograd, Srbija
                 </p>
               </div>
             </div>
-
             <div className={styles.infoItem}>
               <Phone className={styles.infoIcon} />
               <div>
                 <h4 className={styles.infoLabel}>Telefon</h4>
                 <p className={styles.infoText}>
-                  +381 11 123 4567
-                  <br />
-                  +381 64 123 4567
+                  +381 11 123 4567<br />+381 64 123 4567
                 </p>
               </div>
             </div>
-
             <div className={styles.infoItem}>
               <Mail className={styles.infoIcon} />
               <div>
                 <h4 className={styles.infoLabel}>Email</h4>
                 <p className={styles.infoText}>
-                  info@eurosystem.rs
-                  <br />
-                  podrska@eurosystem.rs
+                  info@eurosystem.rs<br />podrska@eurosystem.rs
                 </p>
               </div>
             </div>
-
             <div className={styles.infoItem}>
               <Clock className={styles.infoIcon} />
               <div>
                 <h4 className={styles.infoLabel}>Radno vrijeme</h4>
                 <p className={styles.infoText}>
-                  Pon - Pet: 08:00 - 17:00
-                  <br />
-                  Sub: 09:00 - 14:00
+                  Pon - Pet: 08:00 - 17:00<br />Sub: 09:00 - 14:00
                 </p>
               </div>
             </div>
-
             <div className={styles.map}>
               <div className={styles.mapPlaceholder}>
                 <MapPin size={48} />
@@ -95,12 +110,9 @@ export default function ContactSection() {
 
           <div className={styles.contactForm}>
             <h3 className={styles.formTitle}>Pošaljite poruku</h3>
-
-            <form onSubmit={handleSubmit} className={styles.form}>
+            <form onSubmit={handleSubmit} className={styles.form} autoComplete="off">
               <div className={styles.formGroup}>
-                <label htmlFor="name" className={styles.label}>
-                  Ime i prezime *
-                </label>
+                <label htmlFor="name" className={styles.label}>Ime i prezime *</label>
                 <input
                   type="text"
                   id="name"
@@ -112,12 +124,9 @@ export default function ContactSection() {
                   placeholder="Unesite vaše ime"
                 />
               </div>
-
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="email" className={styles.label}>
-                    Email *
-                  </label>
+                  <label htmlFor="email" className={styles.label}>Email *</label>
                   <input
                     type="email"
                     id="email"
@@ -129,11 +138,8 @@ export default function ContactSection() {
                     placeholder="vas@email.com"
                   />
                 </div>
-
                 <div className={styles.formGroup}>
-                  <label htmlFor="phone" className={styles.label}>
-                    Telefon
-                  </label>
+                  <label htmlFor="phone" className={styles.label}>Telefon</label>
                   <input
                     type="tel"
                     id="phone"
@@ -145,11 +151,8 @@ export default function ContactSection() {
                   />
                 </div>
               </div>
-
               <div className={styles.formGroup}>
-                <label htmlFor="message" className={styles.label}>
-                  Poruka *
-                </label>
+                <label htmlFor="message" className={styles.label}>Poruka *</label>
                 <textarea
                   id="message"
                   name="message"
@@ -161,11 +164,11 @@ export default function ContactSection() {
                   placeholder="Opišite vaš zahtjev ili pitanje..."
                 />
               </div>
-
-              <button type="submit" className={styles.submitButton}>
-                <Send size={20} />
-                Pošalji poruku
+              <button type="submit" className={styles.submitButton} disabled={sending}>
+                <Send size={20} /> {sending ? "Šaljem..." : "Pošalji poruku"}
               </button>
+              {success && <div style={{ color: 'lightgreen', marginTop: 8 }}>{success}</div>}
+              {error && <div style={{ color: 'salmon', marginTop: 8 }}>{error}</div>}
             </form>
           </div>
         </div>

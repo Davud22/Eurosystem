@@ -41,3 +41,15 @@ class TokenData(BaseModel):
 
 class UserGoogleLogin(BaseModel):
     id_token: str 
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None 
+
+class ContactMessageCreate(BaseModel):
+    name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    message: str 

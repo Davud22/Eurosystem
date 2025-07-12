@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from passlib.context import CryptContext
 from sqlmodel import Session
-from models.user import User, UserRole
+from models.user import User, UserRole, ContactMessage
 from repositories import user_repository
 from fastapi import HTTPException, status
 from services.jwt_service import create_reset_token, decode_token
@@ -199,3 +199,15 @@ def google_register(session: Session, id_token: str) -> User:
         is_active=True
     )
     return user_repository.create_user(session, user)
+
+def create_contact_message(session: Session, name: str, email: str, phone: Optional[str], message: str) -> ContactMessage:
+    if not name or not email or not message:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Ime, email i poruka su obavezni.")
+    contact = ContactMessage(
+        name=name,
+        email=email,
+        phone=phone,
+        message=message
+    )
+    return user_repository.create_contact_message(session, contact)
