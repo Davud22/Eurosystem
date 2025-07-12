@@ -15,6 +15,7 @@ from controllers import comment_controller
 from controllers import project_controller
 from controllers import blog_rating_controller
 from controllers import user_controller
+from controllers import cart_controller
 from dotenv import load_dotenv
 import os
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
@@ -62,4 +63,5 @@ app.include_router(comment_controller.router)
 app.include_router(project_controller.router)
 app.include_router(blog_rating_controller.router)
 app.include_router(user_controller.router)
+app.include_router(cart_controller.router)
 app.mount("/images", StaticFiles(directory="images"), name="images")

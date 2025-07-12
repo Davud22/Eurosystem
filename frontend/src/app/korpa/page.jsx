@@ -1,49 +1,105 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Header from "../components/Header/Header"
 import Footer from "../components/Footer/Footer"
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react"
 import styles from "./Korpa.module.css"
+import jsPDF from "jspdf"
+
+function LoginModal({ onClose }) {
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', borderRadius: 12, padding: 32, minWidth: 320, boxShadow: '0 2px 16px #0007', textAlign: 'center' }}>
+        <h2 style={{ marginBottom: 16 }}>Prijava ili registracija</h2>
+        <p style={{ marginBottom: 24 }}>Morate biti prijavljeni da biste videli svoju korpu.</p>
+        <button onClick={onClose} style={{ background: 'var(--accent-primary)', color: '#fff', border: 'none', borderRadius: 6, padding: '0.5em 1.5em', fontWeight: 600, cursor: 'pointer' }}>Zatvori</button>
+      </div>
+    </div>
+  )
+}
 
 export default function KorpaPage() {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Alarmni sistem Pro",
-      price: 45000,
-      quantity: 1,
-      image: "/placeholder.svg?height=100&width=100",
-      description: "Profesionalni alarmni sistem sa bežičnim senzorima",
-    },
-    {
-      id: 2,
-      name: "IP kamera HD Set",
-      price: 28000,
-      quantity: 2,
-      image: "/placeholder.svg?height=100&width=100",
-      description: "Set od 4 HD IP kamere sa NVR sistemom",
-    },
-  ])
+  const [cartItems, setCartItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showLogin, setShowLogin] = useState(false)
 
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity === 0) {
-      removeItem(id)
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+    if (!token) {
+      setShowLogin(true)
+      setLoading(false)
       return
     }
-    setCartItems((items) => items.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
+    fetch('http://localhost:8000/cart/my', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setCartItems(data))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const getImageUrl = (product) => {
+    if (!product?.image_url) return "/placeholder.svg"
+    return product.image_url.startsWith("/images/") ? `http://localhost:8000${product.image_url}` : product.image_url
   }
 
-  const removeItem = (id) => {
-    setCartItems((items) => items.filter((item) => item.id !== id))
+  const updateQuantity = async (product_id, newQuantity) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+    if (!token) return
+    if (newQuantity <= 0) {
+      await removeItem(product_id)
+      return
+    }
+    await fetch(`http://localhost:8000/cart/update/${product_id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ quantity: newQuantity })
+    })
+    setCartItems((items) => items.map((item) => item.product_id === product_id ? { ...item, quantity: newQuantity } : item))
+  }
+
+  const removeItem = async (product_id) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+    if (!token) return
+    await fetch(`http://localhost:8000/cart/remove/${product_id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    setCartItems(items => items.filter(item => item.product_id !== product_id))
   }
 
   const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
+    return cartItems.reduce((total, item) => total + (item.product?.price || 0) * item.quantity, 0)
   }
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("sr-RS").format(price) + " RSD"
+    return new Intl.NumberFormat("sr-RS").format(price) + " KM"
+  }
+
+  const exportPDF = () => {
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text("Račun - Proizvodi u korpi", 15, 20)
+    let y = 35
+    cartItems.forEach((item, idx) => {
+      doc.setFontSize(12)
+      doc.text(`${idx + 1}. ${item.product?.name || ''} x${item.quantity} - ${formatPrice((item.product?.price || 0) * item.quantity)}`, 15, y)
+      y += 10
+    })
+    doc.setFontSize(14)
+    doc.text(`Ukupno: ${formatPrice(getTotalPrice())}`, 15, y + 10)
+    doc.save("racun.pdf")
+  }
+
+  if (loading) {
+    return <div className={styles.page}><Header /><div className={styles.loading}>Učitavanje...</div><Footer /></div>
+  }
+  if (showLogin) {
+    return <LoginModal onClose={() => setShowLogin(false)} />
   }
 
   return (
@@ -76,35 +132,35 @@ export default function KorpaPage() {
                 {cartItems.map((item) => (
                   <div key={item.id} className={styles.cartItem}>
                     <div className={styles.itemImage}>
-                      <img src={item.image || "/placeholder.svg"} alt={item.name} />
+                      <img src={getImageUrl(item.product)} alt={item.product?.name} />
                     </div>
 
                     <div className={styles.itemDetails}>
-                      <h3 className={styles.itemName}>{item.name}</h3>
-                      <p className={styles.itemDescription}>{item.description}</p>
-                      <span className={styles.itemPrice}>{formatPrice(item.price)}</span>
+                      <h3 className={styles.itemName}>{item.product?.name}</h3>
+                      <p className={styles.itemDescription}>{item.product?.description}</p>
+                      <span className={styles.itemPrice}>{formatPrice(item.product?.price)}</span>
                     </div>
 
                     <div className={styles.itemControls}>
                       <div className={styles.quantityControls}>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.product_id, item.quantity - 1)}
                           className={styles.quantityButton}
                         >
                           <Minus size={16} />
                         </button>
                         <span className={styles.quantity}>{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
                           className={styles.quantityButton}
                         >
                           <Plus size={16} />
                         </button>
                       </div>
 
-                      <div className={styles.itemTotal}>{formatPrice(item.price * item.quantity)}</div>
+                      <div className={styles.itemTotal}>{formatPrice(item.product?.price * item.quantity)}</div>
 
-                      <button onClick={() => removeItem(item.id)} className={styles.removeButton}>
+                      <button onClick={() => removeItem(item.product_id)} className={styles.removeButton}>
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -140,18 +196,12 @@ export default function KorpaPage() {
                 </div>
 
                 <button className={styles.checkoutButton}>
-                  Nastavi sa kupovinom
+                  Pošalji narudžbu
                   <ArrowRight size={20} />
                 </button>
-
-                <div className={styles.paymentMethods}>
-                  <p className={styles.paymentTitle}>Načini plaćanja:</p>
-                  <div className={styles.paymentIcons}>
-                    <span className={styles.paymentMethod}>Kartica</span>
-                    <span className={styles.paymentMethod}>Keš</span>
-                    <span className={styles.paymentMethod}>Čekovi</span>
-                  </div>
-                </div>
+                <button className={styles.checkoutButton} style={{marginTop: 16}} onClick={exportPDF}>
+                  Export PDF račun
+                </button>
               </div>
             </div>
           )}

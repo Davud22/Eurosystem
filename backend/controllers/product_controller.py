@@ -8,7 +8,8 @@ from services.product_service import (
     get_all_products_service,
     update_product_service,
     delete_product_service,
-    save_image_service
+    save_image_service,
+    get_products_by_category_service
 )
 from typing import List
 
@@ -41,4 +42,13 @@ def update_product(product_id: int, product_in: ProductCreate, db: Session = Dep
 @router.delete("/{product_id}")
 def delete_product(product_id: int, db: Session = Depends(get_session)):
     delete_product_service(db, product_id)
-    return {"msg": "Proizvod obrisan."} 
+    return {"msg": "Proizvod obrisan."}
+
+# Public endpoints
+@router.get("/public/categories", tags=["public"])
+def get_categories():
+    return ["Videnadzor", "Alarmni sistemi", "Kapije", "Klima uređaji", "Elektroinstalacioni radovi"]
+
+@router.get("/public/category/{category}", response_model=List[ProductOut], tags=["public"])
+def get_products_by_category(category: str, db: Session = Depends(get_session)):
+    return get_products_by_category_service(db, category) 

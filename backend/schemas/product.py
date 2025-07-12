@@ -15,6 +15,7 @@ class ProductCreate(BaseModel):
     description: str
     price: float
     category: str
+    image_url: Optional[str] = None
     images: List[str] = []
     specifications: List[Dict[str, str]] = []
     in_stock: bool = True

@@ -700,11 +700,7 @@ export default function AdminDashboard() {
                   {products.map(product => (
                     <div key={product.id} className={styles.productCard}>
                       <img
-                        src={product.images && product.images.length > 0 ? `${BACKEND_URL}${product.images[0]}` : "/placeholder.svg"}
-                        alt={product.name}
-                        className={styles.productImage}
-                        style={{ border: "2px solid #ddd", background: "#fff" }}
-                      />
+                        src={product.image_url ? `http://localhost:8000${product.image_url}` : "/placeholder.svg"} alt={product.name} style={{ maxWidth: 80, maxHeight: 80, objectFit: 'cover', borderRadius: 8 }} />
                       <div className={styles.productInfo}>
                         <h3>{product.name}</h3>
                         <p>{product.description}</p>
