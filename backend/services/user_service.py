@@ -11,6 +11,7 @@ from services.jwt_service import create_reset_token, decode_token
 import time
 import requests
 from typing import Optional
+from repositories.user_repository import get_order_count_by_user, get_wishlist_count_by_user, get_cart_count_by_user
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -211,3 +212,11 @@ def create_contact_message(session: Session, name: str, email: str, phone: Optio
         message=message
     )
     return user_repository.create_contact_message(session, contact)
+
+def get_user_dashboard_stats(db: Session, user_id: int):
+    return {
+        "orders": get_order_count_by_user(db, user_id),
+        "wishlist": get_wishlist_count_by_user(db, user_id),
+        "cart": get_cart_count_by_user(db, user_id),
+        "messages": 2  # hardkodirano
+    }

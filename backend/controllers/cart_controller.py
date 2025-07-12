@@ -6,12 +6,12 @@ from schemas.cart import CartCreate, CartOut
 from schemas.wishlist import WishlistCreate, WishlistOut
 from typing import List
 from pydantic import BaseModel
+from services.jwt_service import get_current_user
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 
-def get_current_user_id():
-    # TODO: Zameni sa pravom autentikacijom/tokenom
-    return 1
+def get_current_user_id(user=Depends(get_current_user)):
+    return user.id
 
 class CartUpdate(BaseModel):
     quantity: int

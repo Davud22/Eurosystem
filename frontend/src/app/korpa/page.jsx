@@ -23,6 +23,7 @@ export default function KorpaPage() {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [showLogin, setShowLogin] = useState(false)
+  const [orderMessage, setOrderMessage] = useState("");
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
@@ -94,6 +95,30 @@ export default function KorpaPage() {
     doc.text(`Ukupno: ${formatPrice(getTotalPrice())}`, 15, y + 10)
     doc.save("racun.pdf")
   }
+
+  const sendOrder = async () => {
+    setOrderMessage("");
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    if (!token) {
+      setShowLogin(true);
+      return;
+    }
+    try {
+      const res = await fetch('http://localhost:8000/orders/from-cart', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setCartItems([]);
+        setOrderMessage("Narudžba je uspešno poslata!");
+      } else {
+        const data = await res.json();
+        setOrderMessage(data.detail || "Greška prilikom slanja narudžbe.");
+      }
+    } catch (e) {
+      setOrderMessage("Greška prilikom slanja narudžbe.");
+    }
+  };
 
   if (loading) {
     return <div className={styles.page}><Header /><div className={styles.loading}>Učitavanje...</div><Footer /></div>
@@ -195,10 +220,11 @@ export default function KorpaPage() {
                   </div>
                 </div>
 
-                <button className={styles.checkoutButton}>
+                <button className={styles.checkoutButton} onClick={sendOrder}>
                   Pošalji narudžbu
                   <ArrowRight size={20} />
                 </button>
+                {orderMessage && <div style={{color: orderMessage.includes('uspešno') ? 'green' : 'red', marginTop: 8}}>{orderMessage}</div>}
                 <button className={styles.checkoutButton} style={{marginTop: 16}} onClick={exportPDF}>
                   Export PDF račun
                 </button>
