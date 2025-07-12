@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { User, ShoppingBag, Heart, MessageCircle, Settings, Star, TrendingUp } from "lucide-react"
+import { User, ShoppingBag, Heart, MessageCircle, Settings, Star, TrendingUp, Trash2, ShoppingCart } from "lucide-react"
 import Header from "../components/Header/Header"
 import styles from "./User.module.css"
 
@@ -12,6 +12,7 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const formRef = useRef(null)
+  const [wishlist, setWishlist] = useState([])
 
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
 
@@ -37,6 +38,15 @@ export default function UserDashboard() {
       setLoading(false)
     }
     fetchUser()
+    // Fetch wishlist
+    const token = localStorage.getItem("access_token")
+    if (token) {
+      fetch(`${BACKEND_URL}/cart/wishlist/my`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => setWishlist(data))
+    }
   }, [])
 
   function handleChange(e) {
@@ -68,6 +78,28 @@ export default function UserDashboard() {
     fetch("/api/logout").then(() => {
       window.location.replace("/prijava");
     });
+  }
+
+  const handleRemoveWishlist = async (product_id) => {
+    const token = localStorage.getItem("access_token")
+    await fetch(`${BACKEND_URL}/cart/wishlist/remove/${product_id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    setWishlist(wishlist.filter(w => w.product_id !== product_id))
+  }
+
+  const handleAddToCart = async (product_id) => {
+    const token = localStorage.getItem("access_token")
+    await fetch(`${BACKEND_URL}/cart/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ product_id, quantity: 1 })
+    })
+    await handleRemoveWishlist(product_id)
   }
 
   const stats = {
@@ -289,9 +321,32 @@ export default function UserDashboard() {
           )}
 
           {activeTab === "wishlist" && (
-            <div className={styles.wishlistSection}>
-              <h1 className={styles.pageTitle}>Lista želja</h1>
-              <p className={styles.emptyState}>Vaša lista želja je trenutno prazna.</p>
+            <div className={styles.wishlistTab}>
+              <h2 className={styles.sectionTitle}>Lista želja</h2>
+              {wishlist.length === 0 ? (
+                <p className={styles.emptyWishlist}>Vaša lista želja je trenutno prazna.</p>
+              ) : (
+                <div className={styles.wishlistGrid}>
+                  {wishlist.map((item) => (
+                    <div key={item.id} className={styles.wishlistCard}>
+                      <img src={item.product?.image_url ? (item.product.image_url.startsWith('/images/') ? `http://localhost:8000${item.product.image_url}` : item.product.image_url) : "/placeholder.svg"} alt={item.product?.name} className={styles.wishlistImage} />
+                      <div className={styles.wishlistInfo}>
+                        <h3>{item.product?.name}</h3>
+                        <p>{item.product?.description}</p>
+                        <span className={styles.wishlistPrice}>{item.product?.price} KM</span>
+                      </div>
+                      <div className={styles.wishlistActions}>
+                        <button className={styles.addToCartBtn} onClick={() => handleAddToCart(item.product_id)}>
+                          <ShoppingCart size={18} /> Dodaj u korpu
+                        </button>
+                        <button className={styles.removeBtn} onClick={() => handleRemoveWishlist(item.product_id)}>
+                          <Trash2 size={18} /> Obriši
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

@@ -18,9 +18,6 @@ export default function DodajProizvodPage() {
     price: "",
     category: "",
     images: [],
-    specifications: [{ key: "", value: "" }],
-    inStock: true,
-    featured: false,
   })
 
   const [dragActive, setDragActive] = useState(false)
@@ -63,10 +60,9 @@ export default function DodajProizvodPage() {
       description: formData.description,
       price: parseFloat(priceValue),
       category: formData.category,
-      images: formData.images.map(img => img.url),
-      specifications: formData.specifications,
-      in_stock: formData.inStock,
-      featured: formData.featured,
+      image_url: formData.images[0]?.url || "",
+      in_stock: true,
+      featured: false,
     };
     try {
       const res = await fetch(`${BACKEND_URL}/admin/products`, {
@@ -119,52 +115,29 @@ export default function DodajProizvodPage() {
   }
 
   const handleFiles = async (files) => {
-    const uploaded = [];
-    for (const file of Array.from(files)) {
-      const formData = new FormData();
-      formData.append("file", file);
-      try {
-        const res = await fetch(`${BACKEND_URL}/admin/products/images`, {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (data.url) {
-          uploaded.push({ url: data.url, name: file.name });
-        }
-      } catch {}
-    }
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...uploaded],
-    }));
-  }
+    if (formData.images.length >= 1) return; // već postoji slika
+    const file = files[0];
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      const res = await fetch(`${BACKEND_URL}/admin/products/images`, {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setFormData((prev) => ({
+          ...prev,
+          images: [{ url: data.url, name: file.name }],
+        }));
+      }
+    } catch {}
+  };
 
   const removeImage = (index) => {
     setFormData((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
-    }))
-  }
-
-  const addSpecification = () => {
-    setFormData((prev) => ({
-      ...prev,
-      specifications: [...prev.specifications, { key: "", value: "" }],
-    }))
-  }
-
-  const updateSpecification = (index, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      specifications: prev.specifications.map((spec, i) => (i === index ? { ...spec, [field]: value } : spec)),
-    }))
-  }
-
-  const removeSpecification = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      specifications: prev.specifications.filter((_, i) => i !== index),
     }))
   }
 
@@ -316,55 +289,14 @@ export default function DodajProizvodPage() {
                   />
                 </div>
 
-                {formData.images.length > 0 && (
-                  <div className={styles.imageGrid}>
-                    {formData.images.map((image, index) => (
-                      <div key={index} className={styles.imagePreview}>
-                        <img src={image.url.startsWith('/images/') ? `http://localhost:8000${image.url}` : image.url} alt={image.name} className={styles.previewImage} />
-                        <button type="button" onClick={() => removeImage(index)} className={styles.removeImage}>
-                          <X size={16} />
-                        </button>
-                      </div>
-                    ))}
+                {formData.images.length === 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', margin: '1.5rem 0' }}>
+                    <div style={{ position: 'relative', width: 180, height: 180, borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 12px #0002', background: '#fff' }}>
+                      <img src={formData.images[0].url.startsWith('/images/') ? `http://localhost:8000${formData.images[0].url}` : formData.images[0].url} alt="slika" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, images: [] }))} style={{ position: 'absolute', top: 8, right: 8, background: '#f44', color: '#fff', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 700, fontSize: 18, boxShadow: '0 1px 4px #0003' }}>×</button>
+                    </div>
                   </div>
                 )}
-              </div>
-
-              {/* Specifikacije */}
-              <div className={styles.section}>
-                <div className={styles.sectionHeader}>
-                  <h2 className={styles.sectionTitle}>Specifikacije</h2>
-                  <button type="button" onClick={addSpecification} className={styles.addButton}>
-                    <Plus size={16} />
-                    Dodaj specifikaciju
-                  </button>
-                </div>
-
-                <div className={styles.specifications}>
-                  {formData.specifications.map((spec, index) => (
-                    <div key={index} className={styles.specificationRow}>
-                      <input
-                        type="text"
-                        value={spec.key}
-                        onChange={(e) => updateSpecification(index, "key", e.target.value)}
-                        placeholder="Naziv (npr. Dimenzije)"
-                        className={styles.input}
-                      />
-                      <input
-                        type="text"
-                        value={spec.value}
-                        onChange={(e) => updateSpecification(index, "value", e.target.value)}
-                        placeholder="Vrijednost (npr. 20x15x5 cm)"
-                        className={styles.input}
-                      />
-                      {formData.specifications.length > 1 && (
-                        <button type="button" onClick={() => removeSpecification(index)} className={styles.removeSpec}>
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
 

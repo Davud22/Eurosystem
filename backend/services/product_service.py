@@ -17,6 +17,7 @@ from repositories.product_repository import (
 )
 from typing import List, Optional
 from uuid import uuid4
+from schemas.product import ProductCreate
 
 IMAGES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "images")
 os.makedirs(IMAGES_DIR, exist_ok=True)
@@ -34,8 +35,15 @@ async def save_image_service(file: UploadFile) -> str:
         f.write(content)
     return f"/images/{filename}"
 
-def create_product_service(db: Session, product_in: Product) -> Product:
-    product = Product(**product_in.dict())
+def create_product_service(db: Session, product_in: ProductCreate) -> Product:
+    product = Product(
+        name=product_in.name,
+        description=product_in.description,
+        image_url=getattr(product_in, 'image_url', None),
+        category=product_in.category,
+        price=product_in.price,
+        featured=product_in.featured
+    )
     return create_product_repository(db, product)
 
 def get_product_service(db: Session, product_id: int) -> Optional[Product]:

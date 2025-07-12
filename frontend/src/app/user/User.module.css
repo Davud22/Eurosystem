@@ -487,3 +487,58 @@
 .logoutButton:hover {
   background: #1a2230;
 }
+
+.wishlistTab {
+  margin-top: 2rem;
+}
+.wishlistGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+.wishlistCard {
+  background: var(--bg-primary);
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px #0001;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.wishlistImage {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
+.wishlistInfo {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.wishlistPrice {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+.wishlistActions {
+  display: flex;
+  gap: 1rem;
+}
+.addToCartBtn, .removeBtn {
+  background: var(--accent-primary);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5em 1em;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  transition: background 0.2s;
+}
+.removeBtn { background: #e11d48; }
+.addToCartBtn:hover { background: var(--accent-secondary); }
+.removeBtn:hover { background: #b91c1c; }
+.emptyWishlist { color: var(--text-secondary); text-align: center; margin-top: 2rem; }
