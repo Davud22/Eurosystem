@@ -1,7 +1,7 @@
 from sqlmodel import Session
 from models.order import Order, OrderItem
 from models.user import User
-from repositories.order_repository import create_order_repository
+from repositories.order_repository import create_order_repository, delete_order_repository
 from repositories.cart_repository import get_cart_by_user_repository, clear_cart_by_user_repository
 import random, string
 from fastapi import HTTPException
@@ -20,4 +20,7 @@ def create_order_from_cart_service(db: Session, user_id: int):
     order.items = [OrderItem(product_id=item.product_id, quantity=item.quantity, price=item.product.price) for item in cart_items]
     order = create_order_repository(db, order)
     clear_cart_by_user_repository(db, user_id)  # OBRIŠI KORPU!
-    return order 
+    return order
+
+def delete_order_service(db: Session, order_id: int) -> bool:
+    return delete_order_repository(db, order_id) 

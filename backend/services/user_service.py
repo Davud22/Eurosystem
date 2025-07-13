@@ -220,3 +220,35 @@ def get_user_dashboard_stats(db: Session, user_id: int):
         "cart": get_cart_count_by_user(db, user_id),
         "messages": 2  # hardkodirano
     }
+
+def send_admin_email_service(session: Session, user_id: Optional[int], subject: str, message: str) -> None:
+    smtp_host = str(os.getenv("SMTP_HOST") or "")
+    smtp_port = os.getenv("SMTP_PORT")
+    smtp_user = str(os.getenv("SMTP_USER") or "")
+    smtp_pass = str(os.getenv("SMTP_PASS") or "")
+    if not all([smtp_host, smtp_port, smtp_user, smtp_pass]):
+        raise Exception("SMTP konfiguracija nije potpuna. Provjeri .env varijable.")
+    smtp_port = int(smtp_port) if smtp_port is not None else 587
+    if user_id is not None:
+        user = user_repository.get_by_id(session, user_id)
+        if not user:
+            return
+        users = [user]
+    else:
+        users = user_repository.get_all_users(session)
+    for user in users:
+        msg = MIMEMultipart()
+        msg["From"] = smtp_user
+        msg["To"] = user.email
+        msg["Subject"] = subject
+        body = f"""
+        <div style='font-family:sans-serif;'>
+            <h3>Pozdrav, {user.first_name} {user.last_name}!</h3>
+            <p>{message}</p>
+        </div>
+        """
+        msg.attach(MIMEText(body, "html"))
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, user.email, msg.as_string())

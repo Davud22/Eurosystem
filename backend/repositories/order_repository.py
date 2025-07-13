@@ -1,4 +1,5 @@
 from sqlmodel import Session, select
+from sqlalchemy.orm import selectinload
 from models.order import Order, OrderItem
 from typing import List
 
@@ -12,11 +13,27 @@ def get_orders_by_user_repository(db: Session, user_id: int) -> List[Order]:
     return db.exec(select(Order).where(Order.user_id == user_id)).all()
 
 def get_all_orders_repository(db: Session) -> List[Order]:
-    return db.exec(select(Order)).all()
+    statement = (
+        select(Order)
+        .where(Order.archived == False)
+        .options(
+            selectinload(Order.user),
+            selectinload(Order.items).selectinload(OrderItem.product)
+        )
+    )
+    return db.exec(statement).all()
 
 def update_order_status_repository(db: Session, order_id: int, status: str) -> None:
     order = db.get(Order, order_id)
     if order:
         order.status = status
         db.add(order)
-        db.commit() 
+        db.commit()
+
+def delete_order_repository(db: Session, order_id: int) -> bool:
+    order = db.get(Order, order_id)
+    if order:
+        db.delete(order)
+        db.commit()
+        return True
+    return False 

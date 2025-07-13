@@ -5,7 +5,7 @@ import {
   Users,
   Package,
   ShoppingCart,
-  MessageSquare,
+  MessageCircle,
   FileText,
   Camera,
   BarChart3,
@@ -25,9 +25,9 @@ import { useRef } from "react";
 import { useAuth } from "../../hooks/useAuth"
 
 export default function AdminDashboard() {
-  // Prvo svi hooks - redoslijed mora biti konzistentan
-  const { user, loading, error, logout } = useAuth('admin')
-  const [activeTab, setActiveTab] = useState("overview")
+  // SVI HOOKOVI NA VRHU, REDOSLIJED KAO PRI PRVOM RENDERU
+  const { user, loading, error, logout } = useAuth('admin');
+  const [activeTab, setActiveTab] = useState("overview");
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [modal, setModal] = useState({ open: false, message: "", type: "success" });
@@ -44,7 +44,35 @@ export default function AdminDashboard() {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [deleteProjectId, setDeleteProjectId] = useState(null);
-
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [deleteOrderId, setDeleteOrderId] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  // Email state
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailUserId, setEmailUserId] = useState(""); // "" za sve
+  const [emailStatus, setEmailStatus] = useState("");
+  // Dashboard stats state
+  const [dashboardStats, setDashboardStats] = useState({
+    total_archived: 0,
+    total_current: 0,
+    recent_orders: [],
+    top_products: []
+  });
+  // Chat state for selected user and messages
+  const [selectedChatUser, setSelectedChatUser] = useState("1");
+  const chatUsers = [
+    { id: "1", name: "Davud Fazlic" },
+    { id: "2", name: "Ana Jovanović" },
+    { id: "3", name: "Stefan Nikolić" },
+  ];
+  const chatMessages = [
+    { id: 1, sender: "admin", text: "Pozdrav! Kako mogu da vam pomognem?", time: "14:30" },
+    { id: 2, sender: "user", text: "Imam pitanje za narudžbu #123...", time: "14:31" },
+    { id: 3, sender: "admin", text: "Slobodno pitajte!", time: "14:32" },
+  ];
   const BACKEND_URL = "http://localhost:8000";
 
   // Svi useEffect hooks - uvijek se pozivaju
@@ -110,6 +138,39 @@ export default function AdminDashboard() {
     }
   }, [activeTab, BACKEND_URL]);
 
+  // Dohvati korisnike za email dropdown
+  useEffect(() => {
+    if (activeTab === "email") {
+      fetch(`${BACKEND_URL}/admin/users`)
+        .then(res => res.json())
+        .then(data => setUsers(data))
+        .catch(() => setUsers([]));
+    }
+  }, [activeTab, BACKEND_URL]);
+
+  // Dohvati narudžbe
+  useEffect(() => {
+    if (activeTab === "orders") {
+      setLoadingOrders(true);
+      fetch(`${BACKEND_URL}/orders/`)
+        .then(res => res.json())
+        .then(data => Array.isArray(data) ? setOrders(data) : setOrders([]))
+        .catch(() => setOrders([]))
+        .finally(() => setLoadingOrders(false));
+    }
+  }, [activeTab, BACKEND_URL]);
+
+  // Ukloni sve vezano za orders, loadingOrders, deleteOrderId, selectedOrder, showOrderModal, handleOrderStatusChange, handleDeleteOrder
+
+  // Dashboard stats state
+  useEffect(() => {
+    if (activeTab === "overview") {
+      fetch(`${BACKEND_URL}/orders/dashboard-stats`)
+        .then(res => res.json())
+        .then(data => setDashboardStats(data));
+    }
+  }, [activeTab, BACKEND_URL]);
+
   // Ako se učitava, prikaži loading
   if (loading) {
     return (
@@ -139,40 +200,9 @@ export default function AdminDashboard() {
     newUsers: 23,
   }
 
-  const recentOrders = [
-    {
-      id: "ORD-001",
-      customer: "Marko Petrović",
-      product: "Alarmni sistem Pro",
-      status: "pending",
-      amount: "45.000 RSD",
-      date: "15.12.2024",
-    },
-    {
-      id: "ORD-002",
-      customer: "Ana Jovanović",
-      product: "IP kamera set",
-      status: "processing",
-      amount: "28.000 RSD",
-      date: "15.12.2024",
-    },
-    {
-      id: "ORD-003",
-      customer: "Stefan Nikolić",
-      product: "Pametni senzor",
-      status: "completed",
-      amount: "12.500 RSD",
-      date: "14.12.2024",
-    },
-  ]
-
-  const topProducts = [
-    { name: "Alarmni sistem Pro", views: 1234, sales: 45 },
-    { name: "IP kamera HD", views: 987, sales: 32 },
-    { name: "Pametni senzor pokreta", views: 756, sales: 28 },
-    { name: "Wireless alarm", views: 654, sales: 21 },
-    { name: "Video interfon", views: 543, sales: 18 },
-  ]
+  // recentOrders i topProducts sada dolaze iz dashboardStats
+  const recentOrders = dashboardStats.recent_orders || [];
+  const topProducts = dashboardStats.top_products || [];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -357,6 +387,26 @@ export default function AdminDashboard() {
       .then(data => setBlogs(data));
   };
 
+  // Promjena statusa narudžbe
+  const handleOrderStatusChange = async (orderId, newStatus) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/orders/${orderId}/status?status=${encodeURIComponent(newStatus)}`, { method: "PATCH" });
+      if (!res.ok) throw new Error();
+      setOrders(orders => orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      setModal({ open: true, message: "Status narudžbe ažuriran!", type: "success" });
+    } catch {
+      setModal({ open: true, message: "Greška pri promjeni statusa!", type: "error" });
+    }
+  };
+
+  // Brisanje narudžbe
+  // Ukloni sve vezano za orders, loadingOrders, deleteOrderId, selectedOrder, showOrderModal, handleOrderStatusChange, handleDeleteOrder
+
+  const handleArchiveOrder = async (orderId) => {
+    await fetch(`${BACKEND_URL}/orders/${orderId}/archive`, { method: "PATCH" });
+    setOrders(orders => orders.filter(o => o.id !== orderId));
+  };
+
   return (
     <div className={styles.admin}>
       <Header />
@@ -406,8 +456,8 @@ export default function AdminDashboard() {
               onClick={() => setActiveTab("comments")}
               className={`${styles.navItem} ${activeTab === "comments" ? styles.active : ""}`}
             >
-              <MessageSquare size={20} />
-              Komentari
+              <MessageCircle size={20} />
+              Chat
             </button>
             <button
               onClick={() => setActiveTab("blog")}
@@ -455,9 +505,8 @@ export default function AdminDashboard() {
                     <Users size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{stats.totalUsers}</h3>
+                    <h3 className={styles.statNumber}>{dashboardStats.total_users}</h3>
                     <p className={styles.statLabel}>Ukupno korisnika</p>
-                    <span className={styles.statChange}>+{stats.newUsers} novo</span>
                   </div>
                 </div>
 
@@ -466,9 +515,30 @@ export default function AdminDashboard() {
                     <ShoppingCart size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{stats.totalOrders}</h3>
+                    <h3 className={styles.statNumber}>{dashboardStats.total_orders}</h3>
                     <p className={styles.statLabel}>Ukupno narudžbi</p>
-                    <span className={styles.statChange}>+{stats.todayOrders} danas</span>
+                  </div>
+                </div>
+
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon}>
+                    <ShoppingCart size={24} />
+                  </div>
+                  <div className={styles.statContent}>
+                    <h3 className={styles.statNumber}>{dashboardStats.total_current}</h3>
+                    <p className={styles.statLabel}>Trenutne narudžbe</p>
+                    <span className={styles.statChange}>Aktivne</span>
+                  </div>
+                </div>
+
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon}>
+                    <ShoppingCart size={24} />
+                  </div>
+                  <div className={styles.statContent}>
+                    <h3 className={styles.statNumber}>{dashboardStats.total_archived}</h3>
+                    <p className={styles.statLabel}>Arhivirane narudžbe</p>
+                    <span className={styles.statChange}>Skriveno</span>
                   </div>
                 </div>
 
@@ -477,7 +547,7 @@ export default function AdminDashboard() {
                     <Package size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{stats.totalProducts}</h3>
+                    <h3 className={styles.statNumber}>{dashboardStats.total_products}</h3>
                     <p className={styles.statLabel}>Proizvodi</p>
                     <span className={styles.statChange}>Aktivni</span>
                   </div>
@@ -488,9 +558,9 @@ export default function AdminDashboard() {
                     <Star size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{stats.avgRating}</h3>
-                    <p className={styles.statLabel}>Prosečna ocena</p>
-                    <span className={styles.statChange}>Odlično</span>
+                    <h3 className={styles.statNumber}>{dashboardStats.avg_blog_rating}</h3>
+                    <p className={styles.statLabel}>Prosečna ocjena</p>
+                    <span className={styles.statChange}>Blogovi</span>
                   </div>
                 </div>
                 <div className={styles.statCard}>
@@ -498,19 +568,17 @@ export default function AdminDashboard() {
                     <FileText size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{blogStats.total}</h3>
+                    <h3 className={styles.statNumber}>{dashboardStats.total_blogs}</h3>
                     <p className={styles.statLabel}>Blogova</p>
-                    <span className={styles.statChange}>Ocjena: {blogStats.avgRating.toFixed(1)}</span>
                   </div>
                 </div>
                 <div className={styles.statCard}>
                   <div className={styles.statIcon}>
-                    <MessageSquare size={24} />
+                    <MessageCircle size={24} />
                   </div>
                   <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{blogStats.totalComments}</h3>
+                    <h3 className={styles.statNumber}>{dashboardStats.total_blog_comments}</h3>
                     <p className={styles.statLabel}>Komentara na blogovima</p>
-                    <span className={styles.statChange}>Top blogovi:</span>
                   </div>
                 </div>
               </div>
@@ -522,19 +590,23 @@ export default function AdminDashboard() {
                     <div className={styles.tableHeader}>
                       <span>Narudžba</span>
                       <span>Kupac</span>
-                      <span>Proizvod</span>
                       <span>Status</span>
                       <span>Iznos</span>
+                      <span>Datum</span>
                     </div>
-                    {recentOrders.map((order) => (
+                    {recentOrders.length === 0 ? (
+                      <div className={styles.tableRow} style={{ textAlign: 'center', color: '#888', fontStyle: 'italic' }}>
+                        Nema nedavnih narudžbi.
+                      </div>
+                    ) : recentOrders.map((order) => (
                       <div key={order.id} className={styles.tableRow}>
-                        <span className={styles.orderId}>#{order.id}</span>
-                        <span>{order.customer}</span>
-                        <span>{order.product}</span>
-                        <span className={`${styles.status} ${getStatusColor(order.status)}`}>
+                        <span className={styles.orderId}>#{order.code}</span>
+                        <span style={{ fontWeight: 500 }}>{order.user ? `${order.user.first_name} ${order.user.last_name}` : '-'}</span>
+                        <span className={`${styles.status} ${getStatusColor(order.status)}`} style={{ fontWeight: 500 }}>
                           {getStatusText(order.status)}
                         </span>
-                        <span className={styles.amount}>{order.amount}</span>
+                        <span className={styles.amount}><b>{order.amount.toLocaleString()}</b> <span style={{ fontWeight: 400 }}>KM</span></span>
+                        <span>{order.created_at ? formatDate(order.created_at) : '-'}</span>
                       </div>
                     ))}
                   </div>
@@ -543,22 +615,11 @@ export default function AdminDashboard() {
                 <div className={styles.topProducts}>
                   <h2 className={styles.sectionTitle}>Najpopularniji proizvodi</h2>
                   <div className={styles.productsList}>
-                    {topProducts.map((product, index) => (
-                      <div key={index} className={styles.productItem}>
-                        <div className={styles.productRank}>#{index + 1}</div>
-                        <div className={styles.productInfo}>
-                          <h4 className={styles.productName}>{product.name}</h4>
-                          <div className={styles.productStats}>
-                            <span className={styles.productViews}>
-                              <Eye size={14} />
-                              {product.views}
-                            </span>
-                            <span className={styles.productSales}>
-                              <ShoppingCart size={14} />
-                              {product.sales}
-                            </span>
-                          </div>
-                        </div>
+                    {topProducts.map((product, idx) => (
+                      <div key={product.id} className={styles.productItem}>
+                        <span className={styles.productRank}>#{idx + 1}</span>
+                        <span className={styles.productName}>{product.name}</span>
+                        <span className={styles.productStats}><ShoppingCart size={16} style={{ marginRight: 4 }} /> {product.total_sold}</span>
                       </div>
                     ))}
                   </div>
@@ -737,41 +798,139 @@ export default function AdminDashboard() {
           {activeTab === "orders" && (
             <div className={styles.ordersSection}>
               <h1 className={styles.pageTitle}>Upravljanje narudžbama</h1>
-              <div className={styles.table}>
-                <div className={styles.tableHeader}>
-                  <span>ID</span>
-                  <span>Kupac</span>
-                  <span>Proizvod</span>
-                  <span>Status</span>
-                  <span>Iznos</span>
-                  <span>Datum</span>
-                  <span>Akcije</span>
-                </div>
-                {recentOrders.map((order) => (
-                  <div key={order.id} className={styles.tableRow}>
-                    <span>#{order.id}</span>
-                    <span>{order.customer}</span>
-                    <span>{order.product}</span>
-                    <select defaultValue={order.status} className={styles.statusSelect}>
-                      <option value="pending">Na čekanju</option>
-                      <option value="processing">U izradi</option>
-                      <option value="completed">Završeno</option>
-                    </select>
-                    <span>{order.amount}</span>
-                    <span>{order.date}</span>
-                    <span className={styles.actions}>
-                      <button className={styles.viewButton}>Pogledaj</button>
-                    </span>
+              {modal.open && (
+                <div style={{ background: modal.type === "success" ? "#d1fae5" : "#fee2e2", color: modal.type === "success" ? "#047857" : "#b91c1c", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center", fontWeight: 500 }}>{modal.message}</div>
+              )}
+              {loadingOrders ? (
+                <div>Učitavanje narudžbi...</div>
+              ) : (
+                <div className={styles.table}>
+                  <div className={styles.tableHeader}>
+                    <span>ID</span>
+                    <span>Kupac</span>
+                    <span>Telefon</span>
+                    <span>Status</span>
+                    <span>Iznos</span>
+                    <span>Datum</span>
+                    <span>Akcije</span>
                   </div>
-                ))}
-              </div>
+                  {Array.isArray(orders) && orders.map((order) => (
+                    <div key={order.id} className={styles.tableRow}>
+                      <span>#{order.id}</span>
+                      <span>{order.user?.first_name} {order.user?.last_name}</span>
+                      <span>{order.user?.phone || '-'}</span>
+                      <span>
+                        <select
+                          value={order.status}
+                          onChange={e => handleOrderStatusChange(order.id, e.target.value)}
+                          className={styles.statusSelect}
+                        >
+                          <option value="pending">Na čekanju</option>
+                          <option value="processing">U izradi</option>
+                          <option value="completed">Završeno</option>
+                        </select>
+                      </span>
+                      <span>{order.items && order.items.length > 0 ? order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0).toLocaleString() + ' KM' : '-'}</span>
+                      <span>{order.created_at ? formatDate(order.created_at) : '-'}</span>
+                      <span className={styles.actions}>
+                        <button className={styles.viewButton} onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}>Pogledaj</button>
+                        <button className={styles.archiveButton} onClick={() => handleArchiveOrder(order.id)}>
+                          Arhiviraj
+                        </button>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Modal za detalje narudžbe */}
+              {showOrderModal && selectedOrder && (
+                <div className={styles.modalOverlay}>
+                  <div className={styles.modalContent} style={{ maxWidth: 600 }}>
+                    <h2>Detalji narudžbe #{selectedOrder.id}</h2>
+                    <div style={{ marginBottom: 12 }}>
+                      <b>Kupac:</b> {selectedOrder.user?.first_name} {selectedOrder.user?.last_name}<br />
+                      <b>Email:</b> {selectedOrder.user?.email}<br />
+                      <b>Telefon:</b> {selectedOrder.user?.phone || '-'}
+                    </div>
+                    <div style={{ marginBottom: 12 }}>
+                      <b>Status:</b> {getStatusText(selectedOrder.status)}<br />
+                      <b>Datum:</b> {selectedOrder.created_at ? formatDate(selectedOrder.created_at) : '-'}
+                    </div>
+                    <div>
+                      <b>Proizvodi:</b>
+                      <div style={{ marginTop: 8 }}>
+                        {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                          <table className={styles.orderModalTable}>
+                            <thead>
+                              <tr>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Slika</th>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Naziv</th>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Količina</th>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Cijena/kom</th>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Ukupno</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedOrder.items.map((item, idx) => (
+                                <tr key={idx}>
+                                  <td>
+                                    {item.product?.image_url ? (
+                                      <img src={`http://localhost:8000${item.product.image_url}`} alt={item.product.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }} />
+                                    ) : (
+                                      <div style={{ width: 48, height: 48, background: '#f3f4f6', borderRadius: 6 }} />
+                                    )}
+                                  </td>
+                                  <td>{item.product?.name || '-'}</td>
+                                  <td>{item.quantity}</td>
+                                  <td>{item.price.toLocaleString()} KM</td>
+                                  <td>{(item.price * item.quantity).toLocaleString()} KM</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <div style={{ color: '#aaa' }}>Nema proizvoda.</div>
+                        )}
+                      </div>
+                      <div style={{ marginTop: 16, textAlign: 'right', fontWeight: 600, fontSize: 18 }}>
+                        Ukupno: {selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items.reduce((sum, i) => sum + (i.price * i.quantity), 0).toLocaleString() + ' KM' : '-'}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 24, textAlign: 'right' }}>
+                      <button onClick={() => setShowOrderModal(false)} className={styles.cancelButton}>Zatvori</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === "comments" && (
-            <div className={styles.commentsSection}>
-              <h1 className={styles.pageTitle}>Upravljanje komentarima</h1>
-              <p className={styles.emptyState}>Ovdje će biti lista komentara sa opcijama za odobravanje i brisanje.</p>
+            <div className={styles.chatSection}>
+              <h1 className={styles.pageTitle}>Admin Chat</h1>
+              <div style={{ marginBottom: 24 }}>
+                <label htmlFor="userSelect" style={{ fontWeight: 500, marginRight: 8 }}>Izaberi korisnika:</label>
+                <select id="userSelect" value={selectedChatUser} onChange={e => setSelectedChatUser(e.target.value)} style={{ padding: 8, borderRadius: 6, minWidth: 180 }}>
+                  {chatUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div className={styles.chatContainer} style={{ maxWidth: 600, margin: '0 auto' }}>
+                <div className={styles.chatHeader}>
+                  <h3>Chat sa korisnikom: {chatUsers.find(u => u.id === selectedChatUser)?.name}</h3>
+                </div>
+                <div className={styles.chatMessages} style={{ height: 300, overflowY: 'auto', background: 'var(--bg-secondary)', padding: 16 }}>
+                  {chatMessages.map(msg => (
+                    <div key={msg.id} className={msg.sender === 'admin' ? styles.adminMessage : styles.userMessage}>
+                      <p>{msg.text}</p>
+                      <span className={styles.messageTime}>{msg.time}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.chatInput}>
+                  <input type="text" placeholder="Ukucajte poruku..." className={styles.messageInput} />
+                  <button className={styles.sendButton}>Pošalji</button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -875,28 +1034,49 @@ export default function AdminDashboard() {
           {activeTab === "email" && (
             <div className={styles.emailSection}>
               <h1 className={styles.pageTitle}>Email notifikacije</h1>
-              <div className={styles.emailForm}>
+              <form className={styles.emailForm} onSubmit={async e => {
+                e.preventDefault();
+                setEmailStatus("Šaljem...");
+                const res = await fetch(`${BACKEND_URL}/admin/email`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    user_id: emailUserId === "" ? null : Number(emailUserId),
+                    subject: emailSubject,
+                    message: emailMessage,
+                  }),
+                });
+                if (res.ok) {
+                  setEmailStatus("Email poslan!");
+                  setEmailSubject("");
+                  setEmailMessage("");
+                  setEmailUserId("");
+                } else {
+                  setEmailStatus("Greška pri slanju!");
+                }
+              }}>
                 <div className={styles.formGroup}>
                   <label>Naslov</label>
-                  <input type="text" placeholder="Unesite naslov email-a" />
+                  <input type="text" value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="Unesite naslov email-a" required />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Poruka</label>
-                  <textarea rows={5} placeholder="Unesite sadržaj poruke"></textarea>
+                  <textarea rows={5} value={emailMessage} onChange={e => setEmailMessage(e.target.value)} placeholder="Unesite sadržaj poruke" required></textarea>
                 </div>
                 <div className={styles.formGroup}>
                   <label>Pošalji</label>
-                  <select>
-                    <option>Svim korisnicima</option>
-                    <option>Samo aktivnim korisnicima</option>
-                    <option>Korisnicima sa narudžbama</option>
+                  <select value={emailUserId} onChange={e => setEmailUserId(e.target.value)}>
+                    <option value="">Svim korisnicima</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.first_name} {u.last_name} ({u.email})</option>
+                    ))}
                   </select>
                 </div>
-                <button className={styles.sendEmailButton}>
-                  <Mail size={20} />
-                  Pošalji email
+                <button className={styles.sendEmailButton} type="submit">
+                  <Mail size={20} /> Pošalji email
                 </button>
-              </div>
+                {emailStatus && <div style={{ marginTop: 12, color: emailStatus.includes("poslan") ? "#059669" : "#b91c1c", fontWeight: 500 }}>{emailStatus}</div>}
+              </form>
             </div>
           )}
         </main>
