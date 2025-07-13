@@ -44,6 +44,17 @@ export default function AdminDashboard() {
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [deleteProjectId, setDeleteProjectId] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [deleteOrderId, setDeleteOrderId] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+
+  // Email state
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const [emailUserId, setEmailUserId] = useState(""); // "" za sve
+  const [emailStatus, setEmailStatus] = useState("");
 
   const BACKEND_URL = "http://localhost:8000";
 
@@ -110,6 +121,33 @@ export default function AdminDashboard() {
     }
   }, [activeTab, BACKEND_URL]);
 
+  // Dohvati korisnike za email dropdown
+  useEffect(() => {
+    if (activeTab === "email") {
+      fetch(`${BACKEND_URL}/admin/users`)
+        .then(res => res.json())
+        .then(data => setUsers(data))
+        .catch(() => setUsers([]));
+    }
+  }, [activeTab, BACKEND_URL]);
+
+  // Dohvati narudžbe
+  useEffect(() => {
+    if (activeTab === "orders") {
+      setLoadingOrders(true);
+      const token = localStorage.getItem("access_token");
+      fetch(`${BACKEND_URL}/orders/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => setOrders(data))
+        .catch(() => setOrders([]))
+        .finally(() => setLoadingOrders(false));
+    }
+  }, [activeTab, BACKEND_URL]);
+
   // Ako se učitava, prikaži loading
   if (loading) {
     return (
@@ -145,7 +183,7 @@ export default function AdminDashboard() {
       customer: "Marko Petrović",
       product: "Alarmni sistem Pro",
       status: "pending",
-      amount: "45.000 RSD",
+      amount: "45.000 KM",
       date: "15.12.2024",
     },
     {
@@ -153,7 +191,7 @@ export default function AdminDashboard() {
       customer: "Ana Jovanović",
       product: "IP kamera set",
       status: "processing",
-      amount: "28.000 RSD",
+      amount: "28.000 KM",
       date: "15.12.2024",
     },
     {
@@ -161,7 +199,7 @@ export default function AdminDashboard() {
       customer: "Stefan Nikolić",
       product: "Pametni senzor",
       status: "completed",
-      amount: "12.500 RSD",
+      amount: "12.500 KM",
       date: "14.12.2024",
     },
   ]
@@ -355,6 +393,43 @@ export default function AdminDashboard() {
     fetch(`${BACKEND_URL}/admin/blogs`)
       .then(res => res.json())
       .then(data => setBlogs(data));
+  };
+
+  // Promjena statusa narudžbe
+  const handleOrderStatusChange = async (orderId, newStatus) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${BACKEND_URL}/orders/${orderId}/status?status=${encodeURIComponent(newStatus)}`, { 
+        method: "PATCH",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error();
+      setOrders(orders => orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      setModal({ open: true, message: "Status narudžbe ažuriran!", type: "success" });
+    } catch {
+      setModal({ open: true, message: "Greška pri promjeni statusa!", type: "error" });
+    }
+  };
+
+  // Brisanje narudžbe
+  const handleDeleteOrder = async (orderId) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`${BACKEND_URL}/orders/${orderId}`, { 
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error();
+      setOrders(orders => orders.filter(o => o.id !== orderId));
+      setModal({ open: true, message: "Narudžba obrisana!", type: "success" });
+      setDeleteOrderId(null);
+    } catch {
+      setModal({ open: true, message: "Greška pri brisanju narudžbe!", type: "error" });
+    }
   };
 
   return (
@@ -737,34 +812,120 @@ export default function AdminDashboard() {
           {activeTab === "orders" && (
             <div className={styles.ordersSection}>
               <h1 className={styles.pageTitle}>Upravljanje narudžbama</h1>
-              <div className={styles.table}>
-                <div className={styles.tableHeader}>
-                  <span>ID</span>
-                  <span>Kupac</span>
-                  <span>Proizvod</span>
-                  <span>Status</span>
-                  <span>Iznos</span>
-                  <span>Datum</span>
-                  <span>Akcije</span>
-                </div>
-                {recentOrders.map((order) => (
-                  <div key={order.id} className={styles.tableRow}>
-                    <span>#{order.id}</span>
-                    <span>{order.customer}</span>
-                    <span>{order.product}</span>
-                    <select defaultValue={order.status} className={styles.statusSelect}>
-                      <option value="pending">Na čekanju</option>
-                      <option value="processing">U izradi</option>
-                      <option value="completed">Završeno</option>
-                    </select>
-                    <span>{order.amount}</span>
-                    <span>{order.date}</span>
-                    <span className={styles.actions}>
-                      <button className={styles.viewButton}>Pogledaj</button>
-                    </span>
+              {modal.open && (
+                <div style={{ background: modal.type === "success" ? "#d1fae5" : "#fee2e2", color: modal.type === "success" ? "#047857" : "#b91c1c", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center", fontWeight: 500 }}>{modal.message}</div>
+              )}
+              {loadingOrders ? (
+                <div>Učitavanje narudžbi...</div>
+              ) : (
+                <div className={styles.table}>
+                  <div className={styles.tableHeader}>
+                    <span>ID</span>
+                    <span>Kupac</span>
+                    <span>Telefon</span>
+                    <span>Status</span>
+                    <span>Iznos</span>
+                    <span>Datum</span>
+                    <span>Akcije</span>
                   </div>
-                ))}
-              </div>
+                  {orders.map((order) => (
+                    <div key={order.id} className={styles.tableRow}>
+                      <span>#{order.id}</span>
+                      <span>{order.user?.first_name} {order.user?.last_name}</span>
+                      <span>{order.user?.phone || '-'}</span>
+                      <span>
+                        <select
+                          value={order.status}
+                          onChange={e => handleOrderStatusChange(order.id, e.target.value)}
+                          className={styles.statusSelect}
+                        >
+                          <option value="pending">Na čekanju</option>
+                          <option value="processing">U izradi</option>
+                          <option value="completed">Završeno</option>
+                        </select>
+                      </span>
+                      <span>{order.items && order.items.length > 0 ? order.items.reduce((sum, i) => sum + (i.price * i.quantity), 0).toLocaleString() + ' KM' : '-'}</span>
+                      <span>{order.created_at ? formatDate(order.created_at) : '-'}</span>
+                      <span className={styles.actions}>
+                        <button className={styles.viewButton} onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}>Pogledaj</button>
+                        <button className={styles.deleteButton} style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 600, border: 'none', borderRadius: 8, padding: '8px 24px' }} onClick={() => setDeleteOrderId(order.id)}>Obriši</button>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Modal za potvrdu brisanja narudžbe */}
+              {deleteOrderId && (
+                <div className={styles.modalOverlay}>
+                  <div className={styles.modalContent}>
+                    <h3>Jeste li sigurni da želite obrisati ovu narudžbu?</h3>
+                    <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                      <button onClick={() => handleDeleteOrder(deleteOrderId)} className={styles.deleteButton} style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 600, border: 'none', borderRadius: 8, padding: '8px 24px' }}>Obriši</button>
+                      <button onClick={() => setDeleteOrderId(null)} className={styles.cancelButton}>Otkaži</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Modal za detalje narudžbe */}
+              {showOrderModal && selectedOrder && (
+                <div className={styles.modalOverlay}>
+                  <div className={styles.modalContent} style={{ maxWidth: 600 }}>
+                    <h2>Detalji narudžbe #{selectedOrder.id}</h2>
+                    <div style={{ marginBottom: 12 }}>
+                      <b>Kupac:</b> {selectedOrder.user?.first_name} {selectedOrder.user?.last_name}<br />
+                      <b>Email:</b> {selectedOrder.user?.email}<br />
+                      <b>Telefon:</b> {selectedOrder.user?.phone || '-'}
+                    </div>
+                    <div style={{ marginBottom: 12 }}>
+                      <b>Status:</b> {getStatusText(selectedOrder.status)}<br />
+                      <b>Datum:</b> {selectedOrder.created_at ? formatDate(selectedOrder.created_at) : '-'}
+                    </div>
+                    <div>
+                      <b>Proizvodi:</b>
+                      <div style={{ marginTop: 8 }}>
+                        {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', background: '#181f2a', borderRadius: 8 }}>
+                            <thead>
+                              <tr style={{ background: '#232c3d' }}>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Slika</th>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Naziv</th>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Količina</th>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Cijena/kom</th>
+                                <th style={{ padding: 8, textAlign: 'left' }}>Ukupno</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedOrder.items.map((item, idx) => (
+                                <tr key={idx} style={{ borderBottom: '1px solid #232c3d' }}>
+                                  <td style={{ padding: 8 }}>
+                                    {item.product?.image_url ? (
+                                      <img src={`http://localhost:8000${item.product.image_url}`} alt={item.product.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }} />
+                                    ) : (
+                                      <div style={{ width: 48, height: 48, background: '#232c3d', borderRadius: 6 }} />
+                                    )}
+                                  </td>
+                                  <td style={{ padding: 8 }}>{item.product?.name || '-'}</td>
+                                  <td style={{ padding: 8 }}>{item.quantity}</td>
+                                  <td style={{ padding: 8 }}>{item.price.toLocaleString()} KM</td>
+                                  <td style={{ padding: 8 }}>{(item.price * item.quantity).toLocaleString()} KM</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <div style={{ color: '#aaa' }}>Nema proizvoda.</div>
+                        )}
+                      </div>
+                      <div style={{ marginTop: 16, textAlign: 'right', fontWeight: 600, fontSize: 18 }}>
+                        Ukupno: {selectedOrder.items && selectedOrder.items.length > 0 ? selectedOrder.items.reduce((sum, i) => sum + (i.price * i.quantity), 0).toLocaleString() + ' KM' : '-'}
+                      </div>
+                    </div>
+                    <div style={{ marginTop: 24, textAlign: 'right' }}>
+                      <button onClick={() => setShowOrderModal(false)} className={styles.cancelButton}>Zatvori</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -875,28 +1036,49 @@ export default function AdminDashboard() {
           {activeTab === "email" && (
             <div className={styles.emailSection}>
               <h1 className={styles.pageTitle}>Email notifikacije</h1>
-              <div className={styles.emailForm}>
+              <form className={styles.emailForm} onSubmit={async e => {
+                e.preventDefault();
+                setEmailStatus("Šaljem...");
+                const res = await fetch(`${BACKEND_URL}/admin/email`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    user_id: emailUserId === "" ? null : Number(emailUserId),
+                    subject: emailSubject,
+                    message: emailMessage,
+                  }),
+                });
+                if (res.ok) {
+                  setEmailStatus("Email poslan!");
+                  setEmailSubject("");
+                  setEmailMessage("");
+                  setEmailUserId("");
+                } else {
+                  setEmailStatus("Greška pri slanju!");
+                }
+              }}>
                 <div className={styles.formGroup}>
                   <label>Naslov</label>
-                  <input type="text" placeholder="Unesite naslov email-a" />
+                  <input type="text" value={emailSubject} onChange={e => setEmailSubject(e.target.value)} placeholder="Unesite naslov email-a" required />
                 </div>
                 <div className={styles.formGroup}>
                   <label>Poruka</label>
-                  <textarea rows={5} placeholder="Unesite sadržaj poruke"></textarea>
+                  <textarea rows={5} value={emailMessage} onChange={e => setEmailMessage(e.target.value)} placeholder="Unesite sadržaj poruke" required></textarea>
                 </div>
                 <div className={styles.formGroup}>
                   <label>Pošalji</label>
-                  <select>
-                    <option>Svim korisnicima</option>
-                    <option>Samo aktivnim korisnicima</option>
-                    <option>Korisnicima sa narudžbama</option>
+                  <select value={emailUserId} onChange={e => setEmailUserId(e.target.value)}>
+                    <option value="">Svim korisnicima</option>
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>{u.first_name} {u.last_name} ({u.email})</option>
+                    ))}
                   </select>
                 </div>
-                <button className={styles.sendEmailButton}>
-                  <Mail size={20} />
-                  Pošalji email
+                <button className={styles.sendEmailButton} type="submit">
+                  <Mail size={20} /> Pošalji email
                 </button>
-              </div>
+                {emailStatus && <div style={{ marginTop: 12, color: emailStatus.includes("poslan") ? "#059669" : "#b91c1c", fontWeight: 500 }}>{emailStatus}</div>}
+              </form>
             </div>
           )}
         </main>

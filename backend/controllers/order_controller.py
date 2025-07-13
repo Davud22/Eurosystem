@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from database import get_session
-from services.order_service import create_order_from_cart_service
+from services.order_service import create_order_from_cart_service, delete_order_service
 from repositories.order_repository import get_orders_by_user_repository, get_all_orders_repository, update_order_status_repository
 from schemas.order import OrderOut
 from typing import List
@@ -12,8 +12,8 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 def get_current_user_id(user=Depends(get_current_user)):
     return user.id
 
-def is_admin():
-    return True  # TODO: Zameni sa pravom admin proverom
+def is_admin(user=Depends(get_current_user)):
+    return user.role.value == "admin"
 
 @router.post("/from-cart", response_model=OrderOut)
 def create_order_from_cart(db: Session = Depends(get_session), user_id: int = Depends(get_current_user_id)):
@@ -34,4 +34,13 @@ def update_order_status(order_id: int, status: str, db: Session = Depends(get_se
     if not admin:
         raise HTTPException(status_code=403, detail="Samo admin može menjati status.")
     update_order_status_repository(db, order_id, status)
-    return {"msg": "Status ažuriran."} 
+    return {"msg": "Status ažuriran."}
+
+@router.delete("/{order_id}")
+def delete_order(order_id: int, db: Session = Depends(get_session), admin: bool = Depends(is_admin)):
+    if not admin:
+        raise HTTPException(status_code=403, detail="Samo admin može brisati narudžbe.")
+    success = delete_order_service(db, order_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Narudžba ne postoji.")
+    return {"msg": "Narudžba obrisana."} 

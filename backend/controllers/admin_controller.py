@@ -7,8 +7,14 @@ from typing import List
 from models.user import UserRole
 from services import comment_service
 from schemas.comment import CommentOut
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+class EmailRequest(BaseModel):
+    user_id: int | None = None
+    subject: str = ""
+    message: str = ""
 
 @router.get("/users", response_model=List[UserOut])
 def get_all_users(session: Session = Depends(get_session)):
@@ -46,6 +52,15 @@ def unblock_user(user_id: int, session: Session = Depends(get_session)):
     if not success:
         raise HTTPException(status_code=404, detail="Korisnik ne postoji.")
     return {"msg": "Korisnik aktiviran."}
+
+@router.post("/email")
+def send_email_to_user(
+    data: EmailRequest,
+    session: Session = Depends(get_session)
+):
+    from services.user_service import send_admin_email_service
+    send_admin_email_service(session, data.user_id, data.subject, data.message)
+    return {"msg": "Email poslan."}
 
 @router.get("/blogs/{blog_id}/comments", response_model=List[CommentOut])
 def get_blog_comments(blog_id: int, session: Session = Depends(get_session)):
