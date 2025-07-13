@@ -324,20 +324,33 @@ export default function UserDashboard() {
                           <span className={styles.orderDate} style={{marginLeft: 16}}>{new Date(order.created_at).toLocaleDateString()}</span>
                         </div>
                         <span
-                          className={`${styles.orderStatus} ${order.status === "isporučena" ? styles.delivered : order.status === "u izradi" ? styles.processing : styles.rejected}`}
+                          className={
+                            `${styles.orderStatus} ` +
+                            (order.status === 'completed' ? styles.completed :
+                              order.status === 'u izradi' ? styles.processing :
+                              order.status === 'odbijen' ? styles.rejected : '')
+                          }
                         >
-                          {order.status}
+                          {order.status === 'completed' ? 'završeno' : order.status === 'u izradi' ? 'u izradi' : order.status === 'odbijen' ? 'odbijen' : order.status}
                         </span>
                       </div>
                       <div className={styles.orderDetails}>
                         <b>Stavke narudžbe:</b>
-                        <ul style={{margin: '0.5em 0 0 1em', padding: 0}}>
+                        <div className={styles.orderItemsList}>
                           {order.items.map(item => (
-                            <li key={item.id}>
-                              {item.product?.name || 'Proizvod'} x{item.quantity} – {item.price} KM
-                            </li>
+                            <div key={item.id} className={styles.orderItemRow}>
+                              <img
+                                src={item.product?.image_url ? (item.product.image_url.startsWith('/images/') ? `http://localhost:8000${item.product.image_url}` : item.product.image_url) : "/placeholder.svg"}
+                                alt={item.product?.name}
+                                className={styles.orderProductImage}
+                              />
+                              <span style={{ fontWeight: 500 }}>{item.product?.name || 'Proizvod'}</span>
+                              <span>x{item.quantity}</span>
+                              <span style={{ color: '#888' }}>{item.price} KM</span>
+                              <span style={{ fontWeight: 600 }}>= {(item.price * item.quantity).toLocaleString()} KM</span>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
                         <div style={{marginTop: '1em', fontWeight: 600}}>
                           Ukupno: {order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)} KM
                         </div>

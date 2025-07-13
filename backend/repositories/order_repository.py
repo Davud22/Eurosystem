@@ -15,9 +15,10 @@ def get_orders_by_user_repository(db: Session, user_id: int) -> List[Order]:
 def get_all_orders_repository(db: Session) -> List[Order]:
     statement = (
         select(Order)
+        .where(Order.archived == False)
         .options(
-            selectinload(Order.items).selectinload(OrderItem.product),
-            selectinload(Order.user)
+            selectinload(Order.user),
+            selectinload(Order.items).selectinload(OrderItem.product)
         )
     )
     return db.exec(statement).all()

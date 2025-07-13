@@ -1249,3 +1249,124 @@
   background: #fecaca;
   color: #7f1d1d;
 }
+.archiveButton {
+  background: #fbbf24;
+  color: #1f2937;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.archiveButton:hover {
+  background: #f59e42;
+  color: #fff;
+}
+
+.orderModalTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  color: #222;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.orderModalTable th, .orderModalTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+.orderModalTable th {
+  background: #f3f4f6;
+  font-weight: 600;
+  color: #222;
+}
+.orderModalTable tr:last-child td {
+  border-bottom: none;
+}
+@media (prefers-color-scheme: dark) {
+  .orderModalTable {
+    background: #181f2a;
+    color: #f3f4f6;
+  }
+  .orderModalTable th {
+    background: #232c3d;
+    color: #f3f4f6;
+  }
+  .orderModalTable td {
+    border-bottom: 1px solid #232c3d;
+  }
+}
+
+.adminMessage {
+  align-self: flex-end;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 12px 12px 4px 12px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  max-width: 70%;
+  text-align: right;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+}
+.userMessage {
+  align-self: flex-start;
+  background: #f3f4f6;
+  color: #222;
+  border-radius: 12px 12px 12px 4px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  max-width: 70%;
+  text-align: left;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+@media (prefers-color-scheme: dark) {
+  .userMessage {
+    background: #232c3d;
+    color: #f3f4f6;
+  }
+}
+.chatMessages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+.chatInput {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  border-radius: 0 0 8px 8px;
+}
+.messageInput {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-primary);
+  border-radius: 0.5rem;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+.sendButton {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.sendButton:hover {
+  background: #1d4ed8;
+}
