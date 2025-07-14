@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { User, ShoppingBag, Heart, MessageCircle, Settings, Star, TrendingUp, Trash2, ShoppingCart } from "lucide-react"
+import { User, ShoppingBag, Heart, MessageCircle, Settings, Star, TrendingUp, Trash2, ShoppingCart, Paperclip, SendHorizonal, Loader2 } from "lucide-react"
 import Header from "../components/Header/Header"
 import styles from "./User.module.css"
 
@@ -15,6 +15,20 @@ export default function UserDashboard() {
   const [wishlist, setWishlist] = useState([])
   const [orders, setOrders] = useState([])
   const [dashboardStats, setDashboardStats] = useState({orders: 0, wishlist: 0, cart: 0, messages: 2})
+
+  // CHAT STATE
+  const [chatMessages, setChatMessages] = useState([]);
+  const [messageInput, setMessageInput] = useState("");
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState({});
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [error, setError] = useState("");
+  const messagesEndRef = useRef(null);
+  const ws = useRef(null);
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : "";
+  const adminId = 1; // hardkodirano, zamijeni ako imaš endpoint za admina
 
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
 
@@ -47,13 +61,13 @@ export default function UserDashboard() {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(res => res.json())
-        .then(data => setWishlist(data))
+        .then(data => setWishlist(Array.isArray(data) ? data : Array.isArray(data?.wishlist) ? data.wishlist : []))
       // Fetch orders
       fetch(`${BACKEND_URL}/orders/my`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(res => res.json())
-        .then(data => setOrders(data))
+        .then(data => setOrders(Array.isArray(data) ? data : Array.isArray(data?.orders) ? data.orders : []))
       // Fetch dashboard stats
       fetch(`${BACKEND_URL}/user/dashboard-stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -62,6 +76,50 @@ export default function UserDashboard() {
         .then(data => setDashboardStats(data))
     }
   }, [])
+
+  // Fetch chat messages
+  useEffect(() => {
+    if (activeTab !== "messages" || !token) return;
+    setLoadingMessages(true);
+    setError("");
+    fetch(`${BACKEND_URL}/chat/messages/${adminId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => Array.isArray(data) ? setChatMessages(data) : setChatMessages([]))
+      .catch(() => setChatMessages([]))
+      .finally(() => setLoadingMessages(false));
+    // Mark as read
+    fetch(`${BACKEND_URL}/chat/mark-read/${adminId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  }, [activeTab, token]);
+
+  // WebSocket
+  useEffect(() => {
+    if (activeTab !== "messages" || !token) return;
+    ws.current = new window.WebSocket(
+      `ws://localhost:8000/chat/ws/${adminId}?token=${token}`
+    );
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      setChatMessages(prev => [...prev, msg]);
+    };
+    ws.current.onerror = () => setError("Greška u konekciji na chat server.");
+    ws.current.onclose = () => {};
+    return () => ws.current && ws.current.close();
+  }, [activeTab, token]);
+
+  // Scroll to bottom
+  useEffect(() => {
+    if (activeTab === "messages" && messagesEndRef.current) {
+      // Timeout zbog rendera
+      setTimeout(() => {
+        messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      }, 50);
+    }
+  }, [chatMessages, activeTab]);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -115,6 +173,57 @@ export default function UserDashboard() {
     })
     await handleRemoveWishlist(product_id)
   }
+
+  // File preview
+  const handleFileChange = (e) => {
+    const f = e.target.files[0];
+    setFile(f);
+    if (f) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setFilePreview(ev.target.result);
+      reader.readAsDataURL(f);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  // Send message
+  const sendMessage = async () => {
+    if ((!messageInput.trim() && !file) || sending || !ws.current || ws.current.readyState !== 1) return;
+    setSending(true);
+    setError("");
+    let attachmentUrl = null;
+    let chat_id = null;
+    if (chatMessages.length > 0 && chatMessages[0].chat_id) {
+      chat_id = chatMessages[0].chat_id;
+    }
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch(`${BACKEND_URL}/chat/upload-image`, {
+          method: 'POST',
+          body: formData,
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        attachmentUrl = data.url;
+        setFile(null);
+        setFilePreview(null);
+      } catch {
+        setError("Greška pri uploadu slike.");
+        setSending(false);
+        return;
+      }
+    }
+    try {
+      ws.current.send(JSON.stringify({ content: messageInput, attachment_url: attachmentUrl, chat_id }));
+      setMessageInput("");
+    } catch {
+      setError("Neuspješno slanje poruke.");
+    }
+    setSending(false);
+  };
 
   const stats = {
     orders: 3,
@@ -266,7 +375,7 @@ export default function UserDashboard() {
                     {orders.length === 0 ? (
                       <div className={styles.emptyState}>Nemate narudžbi.</div>
                     ) : (
-                      orders.slice(-3).reverse().map((order) => (
+                      orders && Array.isArray(orders) && orders.slice(-3).reverse().map((order) => (
                         <div key={order.id} className={styles.orderItem}>
                           <div className={styles.orderInfo}>
                             <h4 className={styles.orderProduct}>{order.items[0]?.product?.name || `Narudžba #${order.code}`}</h4>
@@ -290,7 +399,7 @@ export default function UserDashboard() {
                 <div className={styles.recommendations}>
                   <h2 className={styles.sectionTitle}>Preporučeno za vas</h2>
                   <div className={styles.productsList}>
-                    {wishlist.slice(0, 2).map((item) => (
+                    {wishlist && Array.isArray(wishlist) && wishlist.slice(0, 2).map((item) => (
                       <div key={item.id} className={styles.productItem}>
                         <img
                           src={item.product?.image_url ? (item.product.image_url.startsWith('/images/') ? `http://localhost:8000${item.product.image_url}` : item.product.image_url) : "/placeholder.svg"}
@@ -400,14 +509,101 @@ export default function UserDashboard() {
                   <h3>Direktna komunikacija sa Eurosystem timom</h3>
                 </div>
                 <div className={styles.chatMessages}>
-                  <div className={styles.message}>
-                    <p>Pozdrav! Kako mogu da vam pomognem sa našim proizvodima?</p>
-                    <span className={styles.messageTime}>14:30</span>
-                  </div>
+                  {loadingMessages ? (
+                    <div style={{ color: "#888", textAlign: "center", marginTop: 40 }}>Učitavanje poruka...</div>
+                  ) : chatMessages.length === 0 ? (
+                    <div style={{ color: "#888", textAlign: "center", marginTop: 40 }}>
+                      Nema poruka. Počni razgovor!
+                    </div>
+                  ) : (
+                    chatMessages
+                      .slice()
+                      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                      .map(msg => (
+                        <div
+                          key={msg.id}
+                          className={msg.sender_id === user?.id ? styles.messageUser : styles.messageAdmin}
+                        >
+                          {msg.attachment_url && (
+                            <>
+                              {!imgLoaded[msg.id] && (
+                                <div style={{textAlign:'center',marginBottom:6,fontSize:13,color:'#94a3b8'}}>Učitavanje slike...</div>
+                              )}
+                              <img
+                                src={msg.attachment_url.startsWith('/images/') ? `http://localhost:8000${msg.attachment_url}` : msg.attachment_url}
+                                alt="slika"
+                                className={styles.messageImage}
+                                style={{ marginBottom: msg.content ? 8 : 0, display: imgLoaded[msg.id] ? 'block' : 'none' }}
+                                onLoad={() => setImgLoaded(l => ({...l, [msg.id]: true}))}
+                              />
+                            </>
+                          )}
+                          {msg.content && (
+                            <span style={{ wordBreak: "break-word", fontSize: 16 }}>{msg.content}</span>
+                          )}
+                          <span className={styles.messageTime}>
+                            {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                            {/* Kvačice samo za userove poruke */}
+                            {msg.sender_id === user?.id && (
+                              msg.read || msg.is_read ? (
+                                <span className={styles["chat-tick"] + ' ' + styles["chat-tick-double"]} title="Pročitano">✔✔</span>
+                              ) : (
+                                <span className={styles["chat-tick"] + ' ' + styles["chat-tick-single"]} title="Poslano">✔</span>
+                              )
+                            )}
+                          </span>
+                        </div>
+                      ))
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
-                <div className={styles.chatInput}>
-                  <input type="text" placeholder="Ukucajte poruku..." className={styles.messageInput} />
-                  <button className={styles.sendButton}>Pošalji</button>
+                {error && <div style={{ color: '#ef4444', textAlign: 'center', marginBottom: 8 }}>{error}</div>}
+                <div className={styles.chatInput} style={{margin:'0 10px 10px 10px'}}>
+                  <label className="cursor-pointer flex items-center justify-center" title="Dodaj privitak" style={{ width: 44, height: 44, marginBottom:0 }}>
+                    <Paperclip size={22} className="text-[#94a3b8]" />
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      disabled={sending}
+                      tabIndex={-1}
+                      style={{display:'none'}}
+                    />
+                  </label>
+                  {filePreview && (
+                    <div className="relative mr-2">
+                      <img src={filePreview} alt="preview" className={styles.messageImage} style={{maxWidth: 60, maxHeight: 60, borderRadius: 8, border: '2px solid #3b82f6'}} />
+                      <button
+                        onClick={() => { setFile(null); setFilePreview(null); }}
+                        className="absolute -top-2 -right-2 bg-[#ef4444] text-white rounded-full w-6 h-6 flex items-center justify-center text-base shadow"
+                        style={{ border: 'none' }}
+                        title="Ukloni sliku"
+                        type="button"
+                      >×</button>
+                    </div>
+                  )}
+                  <input
+                    type="text"
+                    placeholder="Ukucajte poruku..."
+                    className={styles.messageInput}
+                    value={messageInput}
+                    onChange={e => setMessageInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && (messageInput.trim() || file)) sendMessage();
+                    }}
+                    disabled={sending}
+                    style={{ minWidth: 0 }}
+                  />
+                  <button
+                    className={styles.sendButton}
+                    onClick={sendMessage}
+                    disabled={sending || (!messageInput.trim() && !file)}
+                    style={{ fontSize: 16 }}
+                    type="button"
+                  >
+                    {sending ? <Loader2 className="animate-spin" size={20} /> : <SendHorizonal size={20} />}
+                    {sending ? "Slanje..." : "Pošalji"}
+                  </button>
                 </div>
               </div>
             </div>

@@ -17,6 +17,9 @@ import {
   Trash2,
   UserX,
   UserCheck,
+  Paperclip,
+  SendHorizonal,
+  Loader2,
 } from "lucide-react"
 import Header from "../components/Header/Header"
 import styles from "./Admin.module.css"
@@ -908,29 +911,7 @@ export default function AdminDashboard() {
           {activeTab === "comments" && (
             <div className={styles.chatSection}>
               <h1 className={styles.pageTitle}>Admin Chat</h1>
-              <div style={{ marginBottom: 24 }}>
-                <label htmlFor="userSelect" style={{ fontWeight: 500, marginRight: 8 }}>Izaberi korisnika:</label>
-                <select id="userSelect" value={selectedChatUser} onChange={e => setSelectedChatUser(e.target.value)} style={{ padding: 8, borderRadius: 6, minWidth: 180 }}>
-                  {chatUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
-              </div>
-              <div className={styles.chatContainer} style={{ maxWidth: 600, margin: '0 auto' }}>
-                <div className={styles.chatHeader}>
-                  <h3>Chat sa korisnikom: {chatUsers.find(u => u.id === selectedChatUser)?.name}</h3>
-                </div>
-                <div className={styles.chatMessages} style={{ height: 300, overflowY: 'auto', background: 'var(--bg-secondary)', padding: 16 }}>
-                  {chatMessages.map(msg => (
-                    <div key={msg.id} className={msg.sender === 'admin' ? styles.adminMessage : styles.userMessage}>
-                      <p>{msg.text}</p>
-                      <span className={styles.messageTime}>{msg.time}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className={styles.chatInput}>
-                  <input type="text" placeholder="Ukucajte poruku..." className={styles.messageInput} />
-                  <button className={styles.sendButton}>Pošalji</button>
-                </div>
-              </div>
+              <AdminChat />
             </div>
           )}
 
@@ -1131,6 +1112,313 @@ function ProjectImages({ images }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function AdminChat() {
+  const { user } = useAuth('admin');
+  const [chatUsers, setChatUsers] = useState([]);
+  const [selectedChatUser, setSelectedChatUser] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
+  const [messageInput, setMessageInput] = useState("");
+  const [file, setFile] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [error, setError] = useState("");
+  const [userOnline, setUserOnline] = useState(false);
+  const ws = useRef(null);
+  const messagesEndRef = useRef(null);
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : "";
+  const BACKEND_URL = "http://localhost:8000";
+  const [filePreview, setFilePreview] = useState(null);
+  const [imgLoading, setImgLoading] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState({});
+
+  // Fetch chat partners
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${BACKEND_URL}/chat/partners`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => Array.isArray(data) ? setChatUsers(data) : setChatUsers([]))
+      .catch(() => setChatUsers([]));
+  }, [token]);
+
+  // Fetch messages and online status
+  useEffect(() => {
+    if (!selectedChatUser || !token) return;
+    setLoadingMessages(true);
+    setError("");
+    fetch(`${BACKEND_URL}/chat/messages/${selectedChatUser}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => Array.isArray(data) ? setChatMessages(data) : setChatMessages([]))
+      .catch(() => setChatMessages([]))
+      .finally(() => setLoadingMessages(false));
+    fetch(`${BACKEND_URL}/chat/mark-read/${selectedChatUser}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    // Online status
+    fetch(`${BACKEND_URL}/chat/status/${selectedChatUser}`)
+      .then(res => res.json())
+      .then(data => setUserOnline(data.online))
+      .catch(() => setUserOnline(false));
+  }, [selectedChatUser, token]);
+
+  // WebSocket
+  useEffect(() => {
+    if (!selectedChatUser || !token) return;
+    ws.current = new window.WebSocket(
+      `ws://localhost:8000/chat/ws/${selectedChatUser}?token=${token}`
+    );
+    ws.current.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      setChatMessages(prev => [...prev, msg]);
+    };
+    ws.current.onerror = () => setError("Greška u konekciji na chat server.");
+    ws.current.onclose = () => {};
+    return () => ws.current && ws.current.close();
+  }, [selectedChatUser, token]);
+
+  // Scroll to bottom
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages]);
+
+  // Helper to merge optimistic and real messages (by timestamp)
+  function mergeMessages(messages) {
+    const seen = new Set();
+    return messages.filter(msg => {
+      const key = msg.timestamp + '_' + msg.sender_id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  // Helper za theme
+  function getBubbleClass(isAdmin) {
+    const theme = document.body.dataset.theme === 'dark' ? 'dark' : 'light';
+    if (isAdmin) return styles[`chat-bubble-admin-${theme}`];
+    return styles[`chat-bubble-user-${theme}`];
+  }
+  function getTimeClass() {
+    return document.body.dataset.theme === 'dark' ? styles['chat-time-dark'] : styles['chat-time-light'];
+  }
+  function getChatMessagesClass() {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return styles['chatMessagesDark'];
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return styles['chatMessagesWhite'];
+    }
+    // fallback: bijeli box
+    return styles['chatMessagesWhite'];
+  }
+
+  const handleFileChange = (e) => {
+    const f = e.target.files[0];
+    setFile(f);
+    if (f) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setFilePreview(ev.target.result);
+      reader.readAsDataURL(f);
+    } else {
+      setFilePreview(null);
+    }
+  };
+
+  const sendMessage = async () => {
+    if ((!messageInput.trim() && !file) || sending || !ws.current || ws.current.readyState !== 1) return;
+    setSending(true);
+    setError("");
+    let attachmentUrl = null;
+    let chat_id = null;
+    if (chatMessages.length > 0 && chatMessages[0].chat_id) {
+      chat_id = chatMessages[0].chat_id;
+    }
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch(`${BACKEND_URL}/chat/upload-image`, {
+          method: 'POST',
+          body: formData,
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        attachmentUrl = data.url;
+        setFile(null);
+        setFilePreview(null);
+      } catch {
+        setError("Greška pri uploadu slike.");
+        setSending(false);
+        return;
+      }
+    }
+    try {
+      ws.current.send(JSON.stringify({ content: messageInput, attachment_url: attachmentUrl, chat_id }));
+      setMessageInput("");
+    } catch {
+      setError("Neuspješno slanje poruke.");
+    }
+    setSending(false);
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 24 }}>
+        <label htmlFor="userSelect" style={{ fontWeight: 500, marginRight: 8 }}>Izaberi korisnika:</label>
+        <select
+          id="userSelect"
+          value={selectedChatUser}
+          onChange={e => setSelectedChatUser(e.target.value)}
+          style={{ padding: 8, borderRadius: 6, minWidth: 220 }}
+        >
+          <option value="">Izaberi korisnika</option>
+          {chatUsers.map(u => (
+            <option key={u.id} value={u.id}>
+              {u.first_name} {u.last_name} ({u.email})
+            </option>
+          ))}
+        </select>
+        {selectedChatUser && (
+          <span style={{ marginLeft: 16, color: userOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+            {userOnline ? 'Online' : 'Offline'}
+          </span>
+        )}
+      </div>
+      {selectedChatUser && (
+        <div className={styles.chatContainer} style={{ maxWidth: 600, margin: '0 auto' }}>
+          <div className={styles.chatHeader}>
+            <h3>
+              Chat sa korisnikom: {
+                chatUsers.find(u => String(u.id) === String(selectedChatUser)) ?
+                  `${chatUsers.find(u => String(u.id) === String(selectedChatUser)).first_name} ${chatUsers.find(u => String(u.id) === String(selectedChatUser)).last_name}` : ""
+              }
+            </h3>
+          </div>
+          <div
+            className={styles.chatMessages}
+            style={{
+              height: 320,
+              overflowY: "auto",
+              marginBottom: 8,
+              display: "flex",
+              flexDirection: "column"
+            }}
+          >
+            {loadingMessages ? (
+              <div style={{ color: "#888", textAlign: "center", marginTop: 40 }}>Učitavanje poruka...</div>
+            ) : chatMessages.length === 0 ? (
+              <div style={{ color: "#888", textAlign: "center", marginTop: 40 }}>
+                Nema poruka. Počni razgovor!
+              </div>
+            ) : (
+              chatMessages
+                .slice()
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                .map(msg => (
+                  <div
+                    key={msg.id + '_' + msg.timestamp}
+                    className={getBubbleClass(msg.sender_id === user?.id)}
+                    style={{
+                      alignSelf: msg.sender_id === user?.id ? "flex-end" : "flex-start",
+                      borderRadius: 18,
+                      marginBottom: 12,
+                      maxWidth: '70%',
+                      boxShadow: '0 2px 8px #0002',
+                    }}
+                  >
+                    {typeof msg.attachment_url === "string" && msg.attachment_url !== "" && (
+                      <img
+                        src={`http://localhost:8000${msg.attachment_url}`}
+                        alt="slika"
+                        className={styles["chat-image"]}
+                        style={{ marginBottom: msg.content ? 8 : 0 }}
+                        onError={e => e.target.style.display = 'none'}
+                      />
+                    )}
+                    {msg.content && (
+                      <span style={{ wordBreak: "break-word", fontSize: 16 }}>{msg.content}</span>
+                    )}
+                    <span className={getTimeClass()}>
+                      {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                      {/* KVAKE: prikaz samo za poruke koje je poslao admin */}
+                      {msg.sender_id === user?.id && (
+                        msg.read || msg.is_read ? (
+                          <span className={styles["chat-tick"] + ' ' + styles["chat-tick-double"]} title="Pročitano">✔✔</span>
+                        ) : (
+                          <span className={styles["chat-tick"] + ' ' + styles["chat-tick-single"]} title="Poslano">✔</span>
+                        )
+                      )}
+                    </span>
+                  </div>
+                ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          {error && <div style={{ color: '#ef4444', textAlign: 'center', marginBottom: 8 }}>{error}</div>}
+          {/* Modern chat input UI */}
+          <div className={styles["chat-input-bar"]} style={{margin:'0 10px 10px 10px'}}>
+            {/* File upload button with icon */}
+            <label className="cursor-pointer flex items-center justify-center" title="Dodaj privitak" style={{ width: 48, height: 48, marginBottom:0 }}>
+              <Paperclip size={26} className="text-[#94a3b8]" />
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="hidden"
+                disabled={sending}
+                tabIndex={-1}
+                style={{display:'none'}}
+              />
+            </label>
+            {/* Preview slike */}
+            {filePreview && (
+              <div className="relative mr-2">
+                <img src={filePreview} alt="preview" className={styles["chat-image"]} />
+                <button
+                  onClick={() => { setFile(null); setFilePreview(null); }}
+                  className="absolute -top-2 -right-2 bg-[#ef4444] text-white rounded-full w-6 h-6 flex items-center justify-center text-base shadow"
+                  style={{ border: 'none' }}
+                  title="Ukloni sliku"
+                  type="button"
+                >×</button>
+              </div>
+            )}
+            {/* Poruka input */}
+            <input
+              type="text"
+              placeholder="Ukucajte poruku..."
+              className={styles["chat-input"]}
+              value={messageInput}
+              onChange={e => setMessageInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && (messageInput.trim() || file)) sendMessage();
+              }}
+              disabled={sending}
+              style={{ minWidth: 0 }}
+            />
+            {/* Pošalji dugme s ikonom */}
+            <button
+              className={styles["chat-send-btn"]}
+              onClick={sendMessage}
+              disabled={sending || (!messageInput.trim() && !file)}
+              style={{ fontSize: 18 }}
+              type="button"
+            >
+              {sending ? <Loader2 className="animate-spin" size={24} /> : <SendHorizonal size={24} />}
+              {sending ? "Slanje..." : "Pošalji"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
