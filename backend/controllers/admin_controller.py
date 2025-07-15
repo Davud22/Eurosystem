@@ -46,7 +46,7 @@ def block_user_route(user_id: int, session: Session = Depends(get_session)):
 def unblock_user_route(user_id: int, session: Session = Depends(get_session)):
     success = unblock_user(session, user_id)
     if not success:
-        raise HTTPException(status_code=404, detail="Korisnik ne postoji.")
+        raise HTTPException(status_code=404, detail="Korisnik ne postojii.")
     return {"msg": "Korisnik aktiviran."}
 
 @router.post("/email")
