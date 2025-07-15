@@ -37,7 +37,7 @@ def get_blog(blog_id: int, db: Session = Depends(get_session)):
 def delete_blog(blog_id: int, db: Session = Depends(get_session)):
     success = delete_blog_service(db, blog_id)
     if not success:
-        raise HTTPException(status_code=404, detail="Blog ne postoji.")
+        raise HTTPException(status_code=404, detail="Blog ne postojiii.")
     return {"msg": "Blog obrisan."}
 
 @router.post("/images")
