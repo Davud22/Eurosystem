@@ -309,7 +309,6 @@
   align-items: center;
   margin-bottom: 1.5rem;
 }
-
 .addButton {
   display: flex;
   align-items: center;
@@ -321,16 +320,18 @@
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 1rem;
+  text-decoration: none;
 }
-
 .addButton:hover {
   background-color: var(--accent-secondary);
+  text-decoration: none;
 }
-
 .emptyState {
   text-align: center;
   color: var(--text-secondary);
   padding: 3rem 0;
+  font-size: 1.15rem;
 }
 
 .actions {
@@ -403,22 +404,29 @@
   gap: 0.5rem;
 }
 
-.statusActive {
+.tableRow > span:nth-child(4) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.statusActive, .statusBlocked {
   padding: 0.25rem 0.5rem;
   background-color: #dcfce7;
   color: #16a34a;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
+  width: 110px;
+  min-width: 110px;
+  max-width: 110px;
+  text-align: center;
+  display: inline-block;
 }
-
 .statusBlocked {
-  padding: 0.25rem 0.5rem;
   background-color: #fee2e2;
   color: #b91c1c;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
 }
 
 .statusSelect {

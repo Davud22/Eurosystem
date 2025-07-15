@@ -30,7 +30,11 @@ export default function BlogPreview() {
   const formatDate = (isoDate) => {
     if (!isoDate) return ""
     const date = new Date(isoDate)
-    return date.toLocaleDateString("sr-RS", { day: "2-digit", month: "long", year: "numeric" })
+    // Ručno formatiranje datuma: 14. 07. 2025.
+    const dan = String(date.getDate()).padStart(2, '0')
+    const mjesec = String(date.getMonth() + 1).padStart(2, '0')
+    const godina = date.getFullYear()
+    return `${dan}. ${mjesec}. ${godina}.`
   }
 
   return (

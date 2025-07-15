@@ -59,7 +59,7 @@ export default function NasiRadoviPage() {
         <div className={styles.hero}>
           <div className={styles.container}>
             <h1 className={styles.heroTitle}>Naši radovi</h1>
-            <p className={styles.heroDescription}>Pogledajte neke od naših najuspešnijih projekata i realizacija</p>
+            <p className={styles.heroDescription}>Pogledajte neke od naših najuspješnijih projekata i realizacija</p>
           </div>
         </div>
 
@@ -77,13 +77,13 @@ export default function NasiRadoviPage() {
           </div>
 
           {loading ? (
-            <div className={styles.loading}>Učitavanje radova...</div>
+            <div className={styles.loading}>Učitavanje projekata...</div>
           ) : error ? (
             <div className={styles.error}>Greška: {error}</div>
           ) : (
             <div className={styles.projectsGrid}>
               {filteredProjects.length === 0 ? (
-                <div className={styles.noProjects}>Nema radova za odabranu kategoriju.</div>
+                <div className={styles.noProjects}>Nema projekata za odabranu kategoriju.</div>
               ) : (
                 filteredProjects.map((project) => (
                   <article key={project.id} className={styles.projectCard}>

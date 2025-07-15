@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlmodel import Session
 from database import get_session
 from schemas.product import ProductCreate, ProductOut
@@ -30,10 +30,7 @@ def list_all_products(db: Session = Depends(get_session)):
 
 @router.get("/{product_id}", response_model=ProductOut)
 def get_product(product_id: int, db: Session = Depends(get_session)):
-    product = get_product_service(db, product_id)
-    if not product:
-        raise HTTPException(status_code=404, detail="Proizvod ne postoji.")
-    return product
+    return get_product_service(db, product_id)
 
 @router.put("/{product_id}", response_model=ProductOut)
 def update_product(product_id: int, product_in: ProductCreate, db: Session = Depends(get_session)):

@@ -24,7 +24,7 @@ export default function Header() {
       <div className={`container ${styles.headerContainer}`}>
         <div className={styles.logoContainer}>
           <Link href="/">
-            <Image src="/images/logo.png" alt="Eurosystem" width={180} height={60} className={styles.logo} />
+            <img src="/euro-system-logo.png" alt="Euro System Logo" className={styles.logo} style={{ height: "48px", width: "auto" }} />
           </Link>
         </div>
 

@@ -348,15 +348,7 @@ export default function UserDashboard() {
                     <p className={styles.statLabel}>Lista želja</p>
                   </div>
                 </div>
-                <div className={styles.statCard}>
-                  <div className={styles.statIcon}>
-                    <MessageCircle size={24} />
-                  </div>
-                  <div className={styles.statContent}>
-                    <h3 className={styles.statNumber}>{dashboardStats.messages}</h3>
-                    <p className={styles.statLabel}>Poruke</p>
-                  </div>
-                </div>
+                {/* Uklonjen statCard za Poruke */}
                 <div className={styles.statCard}>
                   <div className={styles.statIcon}>
                     <ShoppingCart size={24} />
@@ -369,6 +361,7 @@ export default function UserDashboard() {
               </div>
 
               <div className={styles.contentGrid}>
+                {/* Nedavne narudžbe */}
                 <div className={styles.recentOrders}>
                   <h2 className={styles.sectionTitle}>Nedavne narudžbe</h2>
                   <div className={styles.ordersList}>
@@ -383,9 +376,14 @@ export default function UserDashboard() {
                           </div>
                           <div className={styles.orderMeta}>
                             <span
-                              className={`${styles.orderStatus} ${order.status === "isporučena" ? styles.delivered : styles.processing}`}
+                              className={
+                                `${styles.orderStatus} ` +
+                                (order.status === 'completed' ? styles.zavrseno :
+                                  order.status === 'u izradi' ? styles.uIzradi :
+                                  order.status === 'odbijen' ? styles.odbijen : '')
+                              }
                             >
-                              {order.status}
+                              {order.status === 'completed' ? 'završeno' : order.status === 'u izradi' ? 'u izradi' : order.status === 'odbijen' ? 'odbijen' : order.status}
                             </span>
                             <span className={styles.orderDate}>{new Date(order.created_at).toLocaleDateString()}</span>
                             <span className={styles.orderAmount}>{order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)} KM</span>
@@ -435,9 +433,9 @@ export default function UserDashboard() {
                         <span
                           className={
                             `${styles.orderStatus} ` +
-                            (order.status === 'completed' ? styles.completed :
-                              order.status === 'u izradi' ? styles.processing :
-                              order.status === 'odbijen' ? styles.rejected : '')
+                            (order.status === 'completed' ? styles.zavrseno :
+                              order.status === 'u izradi' ? styles.uIzradi :
+                              order.status === 'odbijen' ? styles.odbijen : '')
                           }
                         >
                           {order.status === 'completed' ? 'završeno' : order.status === 'u izradi' ? 'u izradi' : order.status === 'odbijen' ? 'odbijen' : order.status}

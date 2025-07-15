@@ -5,13 +5,35 @@ import Footer from "../components/Footer/Footer"
 import { Shield, Camera, Zap, Star, ShoppingCart, DoorOpen, Thermometer, Heart, HeartOff } from "lucide-react"
 import styles from "./Proizvodi.module.css"
 
-function Snackbar({ message, onClose }) {
+function Snackbar({ message, type = 'success', onClose }) {
   useEffect(() => {
     const timer = setTimeout(onClose, 2500)
     return () => clearTimeout(timer)
   }, [onClose])
   return (
-    <div style={{ position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)', background: '#222', color: '#fff', padding: '1em 2em', borderRadius: 8, zIndex: 1000, boxShadow: '0 2px 12px #0005', fontWeight: 500 }}>
+    <div style={{
+      position: 'fixed',
+      bottom: 36,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      background: type === 'success' ? '#22c55e' : '#ef4444',
+      color: '#fff',
+      padding: '1.1em 2.5em',
+      borderRadius: 12,
+      zIndex: 1000,
+      boxShadow: '0 4px 24px #0004',
+      fontWeight: 600,
+      fontSize: 18,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      animation: 'snackbar-in 0.25s cubic-bezier(.4,2,.6,1)'
+    }}>
+      {type === 'success' ? (
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#fff2"/><path d="M7 13l3 3 7-7" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      ) : (
+        <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#fff2"/><path d="M15 9l-6 6M9 9l6 6" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/></svg>
+      )}
       {message}
     </div>
   )
@@ -93,17 +115,17 @@ export default function ProizvodiPage() {
         body: JSON.stringify({ product_id: productId, quantity: 1 })
       })
       if (res.ok) {
-        setSnackbar('Proizvod je uspješno dodan u korpu!')
+        setSnackbar({ message: 'Proizvod je uspješno dodan u korpu!', type: 'success' })
       } else {
         const data = await res.json()
         if (data.detail && data.detail.includes('UNIQUE')) {
-          setSnackbar('Proizvod je već u korpi!')
+          setSnackbar({ message: 'Proizvod je već u korpi!', type: 'info' })
         } else {
-          setSnackbar('Greška pri dodavanju u korpu!')
+          setSnackbar({ message: 'Greška pri dodavanju u korpu!', type: 'error' })
         }
       }
     } catch {
-      setSnackbar('Greška pri dodavanju u korpu!')
+      setSnackbar({ message: 'Greška pri dodavanju u korpu!', type: 'error' })
     }
   }
 
@@ -119,7 +141,7 @@ export default function ProizvodiPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       setWishlist(wishlist.filter(id => id !== productId))
-      setSnackbar('Uklonjeno iz liste želja!')
+      setSnackbar({ message: 'Uklonjeno iz liste želja!', type: 'success' })
     } else {
       await fetch('http://localhost:8000/cart/wishlist/add', {
         method: 'POST',
@@ -130,7 +152,7 @@ export default function ProizvodiPage() {
         body: JSON.stringify({ product_id: productId })
       })
       setWishlist([...wishlist, productId])
-      setSnackbar('Dodano u listu želja!')
+      setSnackbar({ message: 'Dodano u listu želja!', type: 'success' })
     }
   }
 
@@ -147,7 +169,7 @@ export default function ProizvodiPage() {
   return (
     <div className={styles.page}>
       <Header />
-      {snackbar && <Snackbar message={snackbar} onClose={() => setSnackbar(null)} />}
+      {snackbar && <Snackbar message={snackbar.message} type={snackbar.type} onClose={() => setSnackbar(null)} />}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
       <main className={styles.main}>
         <div className={styles.hero}>

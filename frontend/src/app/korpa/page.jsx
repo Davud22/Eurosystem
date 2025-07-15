@@ -19,11 +19,41 @@ function LoginModal({ onClose }) {
   )
 }
 
+function ThankYouModal({ onClose }) {
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+      background: 'rgba(0,0,0,0.55)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      animation: 'fadeIn 0.3s'
+    }}>
+      <div style={{
+        background: 'var(--bg-primary)', color: 'var(--text-primary)', borderRadius: 18, padding: 48, minWidth: 340,
+        boxShadow: '0 8px 32px #0005', textAlign: 'center', position: 'relative', overflow: 'hidden',
+        animation: 'popIn 0.35s cubic-bezier(.4,2,.6,1)'
+      }}>
+        <img src="/euro-system-logo.png" alt="Eurosystem logo" style={{ width: 90, marginBottom: 18, filter: 'drop-shadow(0 2px 8px #0002)' }} />
+        <div style={{ margin: '0 auto 18px auto', width: 80, height: 80, borderRadius: '50%', background: '#22c55e22', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'bounce 1.2s infinite alternate' }}>
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#22c55e"/><path d="M7 13l3 3 7-7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+        <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 10 }}>Hvala na narudžbi!</h2>
+        <p style={{ fontSize: 18, color: 'var(--text-secondary)', marginBottom: 24 }}>Vaša narudžba je uspješno poslata.<br/>Eurosystem tim će Vas uskoro kontaktirati.</p>
+        <button onClick={onClose} style={{ background: '#22c55e', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 36px', fontWeight: 700, fontSize: 18, cursor: 'pointer', boxShadow: '0 2px 8px #22c55e55', transition: 'background 0.2s' }}>Zatvori</button>
+        <style>{`
+          @keyframes popIn { 0% { transform: scale(0.7); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+          @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+          @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-12px); } }
+        `}</style>
+      </div>
+    </div>
+  )
+}
+
 export default function KorpaPage() {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [showLogin, setShowLogin] = useState(false)
   const [orderMessage, setOrderMessage] = useState("");
+  const [showThankYou, setShowThankYou] = useState(false);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
@@ -110,7 +140,8 @@ export default function KorpaPage() {
       });
       if (res.ok) {
         setCartItems([]);
-        setOrderMessage("Narudžba je uspešno poslata!");
+        setShowThankYou(true);
+        setOrderMessage("");
       } else {
         const data = await res.json();
         setOrderMessage(data.detail || "Greška prilikom slanja narudžbe.");
@@ -235,6 +266,7 @@ export default function KorpaPage() {
       </main>
 
       <Footer />
+      {showThankYou && <ThankYouModal onClose={() => setShowThankYou(false)} />}
     </div>
   )
 }

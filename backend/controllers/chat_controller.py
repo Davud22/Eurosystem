@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File
 from sqlmodel import Session
 from database import get_session
 from services.chat_service import send_message_service, get_messages_service, mark_as_read_service, block_user_service, get_chat_partners_service
@@ -11,7 +11,6 @@ from schemas.user import UserOut
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-# Connection manager za online status
 class ConnectionManager:
     def __init__(self):
         self.active_connections = {}
@@ -48,11 +47,8 @@ async def websocket_chat(websocket: WebSocket, receiver_id: int, db: Session = D
             attachment_url = data.get("attachment_url")
             chat_id = data.get("chat_id")
             msg = send_message_service(db, sender_id, receiver_id, content, attachment_url, chat_id)
-            # Pretvori datetime u string za JSON serializaciju
             msg_dict = ChatMessageOut.from_orm(msg).dict()
-            if isinstance(msg_dict.get("timestamp"), (str, type(None))):
-                pass
-            else:
+            if not isinstance(msg_dict.get("timestamp"), (str, type(None))):
                 msg_dict["timestamp"] = msg_dict["timestamp"].isoformat()
             await manager.send_personal_message(receiver_id, msg_dict)
             if receiver_id != sender_id:
@@ -62,24 +58,15 @@ async def websocket_chat(websocket: WebSocket, receiver_id: int, db: Session = D
 
 @router.get("/messages/{user_id}", response_model=List[ChatMessageOut])
 def get_all_messages(user_id: int, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-    """
-    Dohvati sve poruke između trenutnog korisnika i user_id (admin ili user).
-    """
     return get_messages_service(db, current_user.id, user_id)
 
 @router.post("/mark-read/{user_id}")
 def mark_as_read(user_id: int, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-    """
-    Označi sve poruke od user_id prema trenutnom korisniku kao pročitane.
-    """
     mark_as_read_service(db, user_id, current_user.id)
     return {"msg": "Poruke označene kao pročitane."}
 
 @router.post("/block")
 def block_user(req: BlockUserRequest, db: Session = Depends(get_session), current_user: User = Depends(get_current_user)):
-    """
-    Admin blokira ili deblokira korisnika.
-    """
     if current_user.role.value != "admin":
         raise HTTPException(status_code=403, detail="Samo admin može blokirati korisnika.")
     block_user_service(db, req.user_id, req.block)
@@ -87,9 +74,6 @@ def block_user(req: BlockUserRequest, db: Session = Depends(get_session), curren
 
 @router.post("/upload-image", response_model=UploadImageResponse)
 def upload_image(file: UploadFile = File(...)):
-    """
-    Upload slike za chat (privitak). Vraća URL slike.
-    """
     upload_dir = "images/chat_attachments"
     os.makedirs(upload_dir, exist_ok=True)
     file_path = os.path.join(upload_dir, file.filename)
@@ -100,9 +84,6 @@ def upload_image(file: UploadFile = File(...)):
 
 @router.get("/status/{user_id}", response_model=UserStatusResponse)
 def get_user_status(user_id: int):
-    """
-    Provjeri je li korisnik online.
-    """
     return {"user_id": user_id, "online": manager.is_online(user_id)}
 
 @router.get("/partners", response_model=List[UserOut])

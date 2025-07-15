@@ -64,7 +64,7 @@ def get_products_in_stock_service(db: Session) -> List[Product]:
 def search_products_service(db: Session, search_term: str) -> List[Product]:
     return search_products_repository(db, search_term)
 
-def update_product_service(db: Session, product_id: int, product_in: Product) -> Product:
+def update_product_service(db: Session, product_id: int, product_in: ProductCreate) -> Product:
     product = get_product_repository(db, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Proizvod ne postoji.")
@@ -79,4 +79,9 @@ def delete_product_service(db: Session, product_id: int) -> bool:
     return delete_product_repository(db, product_id)
 
 def get_latest_products_service(db: Session, limit: int = 3) -> List[Product]:
-    return get_latest_products_repository(db, limit) 
+    return get_latest_products_repository(db, limit)
+
+def get_categories_service(db: Session):
+    products = get_all_products_repository(db)
+    categories = list(set(product.category for product in products if product.category))
+    return {"categories": categories} 

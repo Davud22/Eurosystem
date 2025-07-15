@@ -39,9 +39,6 @@ class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[UserRole] = None 
 
-class UserGoogleLogin(BaseModel):
-    id_token: str 
-
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -53,3 +50,8 @@ class ContactMessageCreate(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     message: str 
+
+class EmailRequest(BaseModel):
+    user_id: int | None = None
+    subject: str = ""
+    message: str = "" 

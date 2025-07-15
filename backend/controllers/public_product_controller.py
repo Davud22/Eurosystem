@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session
 from services import product_service
 from schemas.product import ProductOut
@@ -32,9 +32,7 @@ def get_featured_products(session: Session = Depends(get_session)):
 
 @router.get("/categories")
 def get_categories(session: Session = Depends(get_session)):
-    products = product_service.get_all_products_service(session)
-    categories = list(set(product.category for product in products if product.category))
-    return {"categories": categories}
+    return product_service.get_categories_service(session)
 
 @router.get("/latest", response_model=List[ProductOut])
 def get_latest_products(
@@ -45,7 +43,4 @@ def get_latest_products(
 
 @router.get("/{product_id}", response_model=ProductOut)
 def get_product(product_id: int, session: Session = Depends(get_session)):
-    product = product_service.get_product_service(session, product_id)
-    if not product:
-        raise HTTPException(status_code=404, detail="Proizvod ne postoji.")
-    return product 
+    return product_service.get_product_service(session, product_id) 

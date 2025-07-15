@@ -5,6 +5,7 @@ from models.blog import Blog
 from repositories import comment_repository, user_repository, blog_repository
 from fastapi import HTTPException, status
 from typing import List
+from schemas.comment import CommentOut
 
 def create_comment(session: Session, blog_id: int, author_id: int, content: str) -> Comment:
     # Provjeri da li blog postoji
@@ -59,3 +60,36 @@ def update_blog_num_comments(session: Session, blog_id: int):
         avg = sum(r.rating for r in ratings) / len(ratings)
     blog = update_blog_stats(session, blog_id, avg_rating=avg, num_comments=num_comments)
     return blog 
+
+def create_comment_with_author_name(session: Session, blog_id: int, author_id: int, content: str) -> CommentOut:
+    comment = create_comment(session, blog_id, author_id, content)
+    if comment.id is None or comment.blog_id is None or comment.author_id is None:
+        raise HTTPException(status_code=500, detail="Greška pri kreiranju komentara.")
+    author = user_repository.get_by_id(session, author_id)
+    author_name = f"{author.first_name} {author.last_name}" if author else "Nepoznat korisnik"
+    return CommentOut(
+        id=comment.id,
+        blog_id=comment.blog_id,
+        author_id=comment.author_id,
+        author_name=author_name,
+        content=comment.content,
+        created_at=comment.created_at
+    )
+
+def get_comments_with_author_names(session: Session, blog_id: int) -> list[CommentOut]:
+    comments = comment_repository.get_by_blog_id(session, blog_id)
+    result = []
+    for comment in comments:
+        if comment.id is None or comment.blog_id is None or comment.author_id is None:
+            continue  # skip invalid comments
+        author = user_repository.get_by_id(session, comment.author_id)
+        author_name = f"{author.first_name} {author.last_name}" if author else "Nepoznat korisnik"
+        result.append(CommentOut(
+            id=comment.id,
+            blog_id=comment.blog_id,
+            author_id=comment.author_id,
+            author_name=author_name,
+            content=comment.content,
+            created_at=comment.created_at
+        ))
+    return result 

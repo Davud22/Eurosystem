@@ -39,8 +39,8 @@ export default function BlogPage() {
   const formatDate = (isoDate) => {
     if (!isoDate) return ""
     const date = new Date(isoDate)
-    // Format na latinici
-    return date.toLocaleDateString("sr-Latn-RS", { day: "2-digit", month: "long", year: "numeric" })
+    // Bosanska latinica, ijekavica
+    return date.toLocaleDateString("bs-BA", { day: "2-digit", month: "long", year: "numeric" })
   }
 
   const uniqueCategories = [
