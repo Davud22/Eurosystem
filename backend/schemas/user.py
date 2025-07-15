@@ -50,3 +50,8 @@ class ContactMessageCreate(BaseModel):
     email: EmailStr
     phone: Optional[str] = None
     message: str 
+
+class EmailRequest(BaseModel):
+    user_id: int | None = None
+    subject: str = ""
+    message: str = "" 

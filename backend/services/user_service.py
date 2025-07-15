@@ -202,3 +202,14 @@ def send_admin_email_service(session: Session, user_id: Optional[int], subject: 
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.sendmail(smtp_user, user.email, msg.as_string())
+
+def get_all_users_only_users(session: Session) -> list[User]:
+    return [u for u in get_all_users(session) if u.role == UserRole.user]
+
+def update_my_profile_service(session, current_user, user_update):
+    allowed_fields = ["first_name", "last_name", "email", "phone"]
+    for field in allowed_fields:
+        value = getattr(user_update, field, None)
+        if value is not None:
+            setattr(current_user, field, value)
+    return update_user(session, current_user)

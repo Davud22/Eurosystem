@@ -14,3 +14,6 @@ class CartOut(CartCreate):
     product: Optional[ProductOut] = None
     class Config:
         orm_mode = True 
+
+class CartUpdate(BaseModel):
+    quantity: int 

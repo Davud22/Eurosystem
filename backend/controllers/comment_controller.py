@@ -16,32 +16,13 @@ def add_comment(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Dodaj komentar na blog"""
     if current_user.id is None:
         raise HTTPException(status_code=400, detail="Neispravan korisnik")
-        
-    comment = comment_service.create_comment(
-        session=session,
-        blog_id=blog_id,
-        author_id=current_user.id,
-        content=comment_in.content
-    )
-    
-    # Vrati komentar s imenom autora
-    author_name = f"{current_user.first_name} {current_user.last_name}"
-    return {
-        "id": comment.id,
-        "blog_id": comment.blog_id,
-        "author_id": comment.author_id,
-        "author_name": author_name,
-        "content": comment.content,
-        "created_at": comment.created_at
-    }
+    return comment_service.create_comment_with_author_name(session, blog_id, current_user.id, comment_in.content)
 
 @router.get("/{blog_id}", response_model=List[CommentOut])
 def get_comments(
     blog_id: int,
     session: Session = Depends(get_session)
 ):
-    """Dohvati sve komentare za blog"""
-    return comment_service.get_comments_by_blog(session, blog_id) 
+    return comment_service.get_comments_with_author_names(session, blog_id) 
