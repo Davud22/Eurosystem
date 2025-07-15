@@ -151,56 +151,6 @@ def reset_password(session: Session, token: str, new_password: str) -> bool:
     user_repository.update_user(session, user)
     return True
 
-# Google authentication
-GOOGLE_TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo"
-
-def google_login(session: Session, id_token: str) -> User:
-    resp = requests.get(GOOGLE_TOKEN_INFO_URL, params={"id_token": id_token})
-    if resp.status_code != 200:
-        raise HTTPException(status_code=400, detail="Neispravan Google token.")
-    
-    info = resp.json()
-    email = info.get("email")
-    if not email:
-        raise HTTPException(status_code=400, detail="Nedostaju podaci iz Google tokena.")
-    
-    user = user_repository.get_by_email(session, email)
-    if not user:
-        raise HTTPException(status_code=404, detail="Nalog ne postoji, registrirajte se prvo!")
-    
-    # Provjeri da li je korisnik blokiran
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Vaš nalog je blokiran.")
-    
-    return user
-
-def google_register(session: Session, id_token: str) -> User:
-    resp = requests.get(GOOGLE_TOKEN_INFO_URL, params={"id_token": id_token})
-    if resp.status_code != 200:
-        raise HTTPException(status_code=400, detail="Neispravan Google token.")
-    
-    info = resp.json()
-    email = info.get("email")
-    first_name = info.get("given_name", "")
-    last_name = info.get("family_name", "")
-    
-    if not email:
-        raise HTTPException(status_code=400, detail="Nedostaju podaci iz Google tokena.")
-    
-    if user_repository.user_exists(session, email):
-        raise HTTPException(status_code=409, detail="Nalog već postoji, prijavite se!")
-    
-    user = User(
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        phone=None,
-        hashed_password="",
-        role=UserRole.user,
-        is_active=True
-    )
-    return user_repository.create_user(session, user)
-
 def create_contact_message(session: Session, name: str, email: str, phone: Optional[str], message: str) -> ContactMessage:
     if not name or not email or not message:
         from fastapi import HTTPException

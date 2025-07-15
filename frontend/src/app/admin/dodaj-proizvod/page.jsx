@@ -240,41 +240,19 @@ export default function DodajProizvodPage() {
                   </div>
                 </div>
 
-                <div className={styles.checkboxGroup}>
-                  <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      name="inStock"
-                      checked={formData.inStock}
-                      onChange={handleChange}
-                      className={styles.checkbox}
-                    />
-                    <span>Proizvod je dostupan</span>
-                  </label>
-
-                  <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      name="featured"
-                      checked={formData.featured}
-                      onChange={handleChange}
-                      className={styles.checkbox}
-                    />
-                    <span>Izdvojeni proizvod</span>
-                  </label>
-                </div>
+                {/* Ukloni checkboxGroup */}
               </div>
 
               {/* Slike */}
               <div className={styles.section}>
                 <h2 className={styles.sectionTitle}>Slike proizvoda</h2>
-
                 <div
                   className={`${styles.dropZone} ${dragActive ? styles.dragActive : ""}`}
                   onDragEnter={handleDrag}
                   onDragLeave={handleDrag}
                   onDragOver={handleDrag}
                   onDrop={handleDrop}
+                  style={{ position: 'relative' }}
                 >
                   <Upload size={48} className={styles.uploadIcon} />
                   <p className={styles.dropText}>
@@ -287,16 +265,17 @@ export default function DodajProizvodPage() {
                     onChange={(e) => handleFiles(e.target.files)}
                     className={styles.fileInput}
                   />
-                </div>
-
-                {formData.images.length === 1 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', margin: '1.5rem 0' }}>
-                    <div style={{ position: 'relative', width: 180, height: 180, borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 12px #0002', background: '#fff' }}>
-                      <img src={formData.images[0].url.startsWith('/images/') ? `http://localhost:8000${formData.images[0].url}` : formData.images[0].url} alt="slika" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
-                      <button type="button" onClick={() => setFormData(prev => ({ ...prev, images: [] }))} style={{ position: 'absolute', top: 8, right: 8, background: '#f44', color: '#fff', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 700, fontSize: 18, boxShadow: '0 1px 4px #0003' }}>×</button>
+                  {formData.images.length === 1 && (
+                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 2 }}>
+                      <div style={{ position: 'relative', width: 180, height: 180, borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 12px #0002', background: '#fff' }}>
+                        {/* Overlay za zamračenje teksta ispod slike */}
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(20, 22, 34, 0.75)', zIndex: 1 }}></div>
+                        <img src={formData.images[0].url.startsWith('/images/') ? `http://localhost:8000${formData.images[0].url}` : formData.images[0].url} alt="slika" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', position: 'relative', zIndex: 2 }} />
+                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, images: [] }))} style={{ position: 'absolute', top: 8, right: 8, background: '#f44', color: '#fff', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 700, fontSize: 18, boxShadow: '0 1px 4px #0003', zIndex: 3 }}>×</button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 

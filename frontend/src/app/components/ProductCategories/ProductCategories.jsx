@@ -1,19 +1,11 @@
 import Link from "next/link"
-import { Shield, Camera, Zap, Home, Building, Wrench } from "lucide-react"
+import { Shield, Camera, DoorOpen, Thermometer, Zap } from "lucide-react"
 import styles from "./ProductCategories.module.css"
 
 export default function ProductCategories() {
   const categories = [
     {
       id: 1,
-      name: "Alarmni sistemi",
-      description: "Napredni sistemi za zaštitu doma i poslovnih prostora",
-      icon: Shield,
-      color: "blue",
-      href: "/proizvodi/alarmni-sistemi",
-    },
-    {
-      id: 2,
       name: "Videonadzor",
       description: "HD kamere i sistemi za video nadzor",
       icon: Camera,
@@ -21,36 +13,36 @@ export default function ProductCategories() {
       href: "/proizvodi/videonadzor",
     },
     {
+      id: 2,
+      name: "Alarmni sistemi",
+      description: "Napredni sistemi za zaštitu doma i poslovnih prostora",
+      icon: Shield,
+      color: "blue",
+      href: "/proizvodi/alarmni-sistemi",
+    },
+    {
       id: 3,
-      name: "Pametne instalacije",
-      description: "Automatizacija i pametno upravljanje",
-      icon: Zap,
-      color: "purple",
-      href: "/proizvodi/pametne-instalacije",
+      name: "Kapije",
+      description: "Automatske i sigurnosne kapije za vaš dom ili firmu",
+      icon: DoorOpen,
+      color: "orange",
+      href: "/proizvodi/kapije",
     },
     {
       id: 4,
-      name: "Kućni sistemi",
-      description: "Rešenja za privatne domove",
-      icon: Home,
-      color: "orange",
-      href: "/proizvodi/kucni-sistemi",
+      name: "Klima uređaji",
+      description: "Ugradnja i održavanje klima uređaja",
+      icon: Thermometer,
+      color: "purple",
+      href: "/proizvodi/klima-uredjaji",
     },
     {
       id: 5,
-      name: "Poslovni sistemi",
-      description: "Profesionalna rešenja za firme",
-      icon: Building,
+      name: "Elektroinstalacioni radovi",
+      description: "Kompletne elektroinstalacije za objekte",
+      icon: Zap,
       color: "red",
-      href: "/proizvodi/poslovni-sistemi",
-    },
-    {
-      id: 6,
-      name: "Održavanje",
-      description: "Servis i održavanje postojećih sistema",
-      icon: Wrench,
-      color: "gray",
-      href: "/proizvodi/odrzavanje",
+      href: "/proizvodi/elektroinstalacioni-radovi",
     },
   ]
 

@@ -41,7 +41,7 @@ export default function HeroSection() {
           </div>
           <div className={styles.imageContent}>
             <div className={styles.heroImage}>
-              <img src="/placeholder.svg?height=500&width=600" alt="Eurosystem tim u akciji" className={styles.image} />
+              <img src="/ipkamera2.png" alt="Eurosystem tim u akciji" className={styles.image} style={{ maxWidth: "100%", borderRadius: "12px" }} />
             </div>
           </div>
         </div>

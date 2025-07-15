@@ -124,8 +124,34 @@ export default function BlogDetailPage() {
           {showComments && (
             <div className={styles.modalOverlay}>
               <div className={styles.modalContent} style={{ maxWidth: 700, minHeight: 350, padding: 40, position: "relative", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", borderRadius: 18 }}>
-                <button onClick={() => { setShowComments(false); fetchBlog(); }} style={{ position: "absolute", top: 24, right: 28, background: "none", border: "none", fontSize: 26, fontWeight: 700, color: "#aaa", cursor: "pointer" }} title="Zatvori">×</button>
-                <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 18, textAlign: "center" }}>Komentari</h2>
+                <button
+                  onClick={() => setShowComments(false)}
+                  style={{
+                    position: "absolute",
+                    top: 18,
+                    right: 18,
+                    background: "rgba(35,43,57,0.92)",
+                    border: "none",
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: "#fff",
+                    cursor: "pointer",
+                    borderRadius: 8,
+                    width: 32,
+                    height: 32,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'background 0.2s',
+                    zIndex: 10,
+                  }}
+                  onMouseOver={e => e.currentTarget.style.background = '#2d3748'}
+                  onMouseOut={e => e.currentTarget.style.background = 'rgba(35,43,57,0.92)'}
+                  aria-label="Zatvori modal"
+                >
+                  ×
+                </button>
+                <h2 style={{ marginBottom: 24, marginTop: 0, paddingRight: 40, fontSize: 32, fontWeight: 700, textAlign: 'center' }}>Komentari</h2>
                 {loadingComments ? (
                   <p style={{ textAlign: "center", fontSize: 18 }}>Učitavanje...</p>
                 ) : !Array.isArray(comments) || comments.length === 0 ? (
@@ -137,23 +163,23 @@ export default function BlogDetailPage() {
                     overflowY: "auto",
                     display: "flex",
                     flexDirection: "column",
-                    gap: 18
+                    gap: 22
                   }}>
                     {comments.map(comment => (
                       <div
                         key={comment.id}
                         style={{
-                          borderRadius: 14,
+                          borderRadius: 16,
                           background: isDark ? "#232b39" : "#f4f7ff",
                           border: isDark ? "1px solid #2d3748" : "1px solid #e5e7eb",
                           boxShadow: isDark
                             ? "0 2px 8px #10151c33"
                             : "0 2px 8px #e0e7ef33",
-                          padding: "18px 22px 16px 22px",
+                          padding: "20px 24px 18px 24px",
                           position: "relative",
                           display: "flex",
                           flexDirection: "column",
-                          gap: 6
+                          gap: 8
                         }}
                       >
                         <div style={{
@@ -163,15 +189,15 @@ export default function BlogDetailPage() {
                           marginBottom: 2
                         }}>
                           <span style={{
-                            fontWeight: 700,
-                            fontSize: 18,
+                            fontWeight: 800,
+                            fontSize: 19,
                             color: isDark ? "#fff" : "#222"
                           }}>
                             {comment.author_name}
                           </span>
                           <span style={{
                             color: isDark ? "#8ca0b3" : "#64748b",
-                            fontSize: 13,
+                            fontSize: 14,
                             fontWeight: 500
                           }}>
                             {new Date(comment.created_at).toLocaleString("bs-BA")}
@@ -194,10 +220,10 @@ export default function BlogDetailPage() {
                               background: isDark ? "#ef4444" : "#fee2e2",
                               color: isDark ? "#fff" : "#b91c1c",
                               border: "none",
-                              borderRadius: 8,
-                              padding: "7px 22px",
-                              fontWeight: 600,
-                              fontSize: 15,
+                              borderRadius: 10,
+                              padding: "8px 26px",
+                              fontWeight: 700,
+                              fontSize: 16,
                               cursor: "pointer",
                               boxShadow: isDark
                                 ? "0 1px 4px #b91c1c22"
@@ -226,10 +252,6 @@ export default function BlogDetailPage() {
                 </div>
               </div>
             </div>
-          )}
-          {/* MODAL PORUKA */}
-          {modal.open && (
-            <div style={{ background: modal.type === "success" ? "#e0ffe0" : "#fee2e2", color: modal.type === "success" ? "#0a0" : "#b91c1c", padding: 12, borderRadius: 8, margin: "24px auto", textAlign: "center", fontWeight: 500, maxWidth: 400 }}>{modal.message}</div>
           )}
         </div>
       </main>

@@ -304,7 +304,7 @@ export default function AdminDashboard() {
           description: updated.description,
           price: parseFloat(updated.price),
           category: updated.category,
-          images: updated.images,
+          image_url: updated.image_url || (updated.images && updated.images[0]?.url) || "",
           specifications: updated.specifications,
           in_stock: updated.in_stock,
           featured: updated.featured,
@@ -340,7 +340,8 @@ export default function AdminDashboard() {
       "Kapije", 
       "Klima uređaji",
       "Elektroinstalacioni radovi"
-    ]
+    ];
+    // Dodaj polje za sliku
     return (
       <div className={styles.modalOverlay}>
         <div className={styles.modalContent}>
@@ -354,6 +355,12 @@ export default function AdminDashboard() {
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
+          {/* Prikaz slike */}
+          {form.image_url && (
+            <div style={{ margin: '16px 0', textAlign: 'center' }}>
+              <img src={form.image_url.startsWith('/images/') ? `http://localhost:8000${form.image_url}` : form.image_url} alt="slika" style={{ width: 120, height: 120, objectFit: 'contain', borderRadius: 8, background: '#fff', border: '1px solid #eee' }} />
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8, margin: "16px 0 0 0" }}>
             <button onClick={() => onSave({ ...form, id: product.id })} className={styles.submitButton}>Spremi</button>
             <button onClick={onClose} className={styles.cancelButton}>Otkaži</button>
@@ -748,12 +755,15 @@ export default function AdminDashboard() {
 
           {activeTab === "products" && (
             <div>
-              <h2 className={styles.sectionTitle}>Proizvodi</h2>
-              <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-                <a href="/admin/dodaj-proizvod" className={styles.addButton} style={{ minWidth: 160, textAlign: "center" }}>
-                  Dodaj proizvod
-                </a>
+              <div className={styles.sectionHeader}>
+                <h2>Proizvodi</h2>
+                <Link href="/admin/dodaj-proizvod" className={styles.addButton}>Dodaj proizvod</Link>
               </div>
+              {products.length === 0 && !loadingProducts && (
+                <div className={styles.emptyState}>
+                  Trenutno nema proizvoda. Dodajte prvi proizvod klikom na "Dodaj proizvod".
+                </div>
+              )}
               {modal.open && (
                 <div style={{ background: modal.type === "success" ? "#d1fae5" : "#fee2e2", color: modal.type === "success" ? "#047857" : "#b91c1c", padding: 12, borderRadius: 8, marginBottom: 16, textAlign: "center", fontWeight: 500 }}>{modal.message}</div>
               )}

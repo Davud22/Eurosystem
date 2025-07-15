@@ -12,7 +12,9 @@ export default function Footer() {
         <div className={styles.content}>
           <div className={styles.brandSection}>
             <div className={styles.logoContainer}>
-              <Image src="/images/logo.png" alt="Eurosystem" width={160} height={50} className={styles.logo} />
+              <Link href="/">
+                <img src="/euro-system-logo.png" alt="Euro System Logo" className={styles.logo} style={{ height: "60px", width: "auto", display: "block", marginBottom: "1rem" }} />
+              </Link>
             </div>
             <p className={styles.brandDescription}>
               Profesionalni sigurnosni sistemi i elektroinstalacije. Vaša sigurnost je naš prioritet.
@@ -34,19 +36,19 @@ export default function Footer() {
             <h3 className={styles.sectionTitle}>Proizvodi</h3>
             <ul className={styles.linksList}>
               <li>
-                <Link href="/proizvodi/alarmni-sistemi">Alarmni sistemi</Link>
-              </li>
-              <li>
                 <Link href="/proizvodi/videonadzor">Videonadzor</Link>
               </li>
               <li>
-                <Link href="/proizvodi/pametne-instalacije">Pametne instalacije</Link>
+                <Link href="/proizvodi/alarmni-sistemi">Alarmni sistemi</Link>
               </li>
               <li>
-                <Link href="/proizvodi/kucni-sistemi">Kućni sistemi</Link>
+                <Link href="/proizvodi/kapije">Kapije</Link>
               </li>
               <li>
-                <Link href="/proizvodi/poslovni-sistemi">Poslovni sistemi</Link>
+                <Link href="/proizvodi/klima-uredjaji">Klima uređaji</Link>
+              </li>
+              <li>
+                <Link href="/proizvodi/elektroinstalacioni-radovi">Elektroinstalacioni radovi</Link>
               </li>
             </ul>
           </div>
@@ -55,16 +57,10 @@ export default function Footer() {
             <h3 className={styles.sectionTitle}>Kompanija</h3>
             <ul className={styles.linksList}>
               <li>
-                <Link href="/o-nama">O nama</Link>
-              </li>
-              <li>
                 <Link href="/nasi-radovi">Naši radovi</Link>
               </li>
               <li>
                 <Link href="/blog">Blog</Link>
-              </li>
-              <li>
-                <Link href="/karijera">Karijera</Link>
               </li>
               <li>
                 <Link href="/kontakt">Kontakt</Link>
@@ -77,15 +73,15 @@ export default function Footer() {
             <div className={styles.contactInfo}>
               <div className={styles.contactItem}>
                 <MapPin size={16} />
-                <span>Bulevar Kralja Aleksandra 73, Beograd</span>
+                <span>Donja Lovnica bb, 72220 Zavidovići, Bosna i Hercegovina</span>
               </div>
               <div className={styles.contactItem}>
                 <Phone size={16} />
-                <span>+381 11 123 4567</span>
+                <span>+387 62 118 125</span>
               </div>
               <div className={styles.contactItem}>
                 <Mail size={16} />
-                <span>info@eurosystem.rs</span>
+                <span>eurosystemor@gmail.com</span>
               </div>
             </div>
           </div>

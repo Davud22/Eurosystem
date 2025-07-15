@@ -269,39 +269,44 @@
 }
 
 .orderStatus {
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.85rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  min-width: 90px;
+  text-align: center;
 }
-
-.orderStatus.delivered {
-  background-color: #dcfce7;
-  color: #16a34a;
+.orderStatus.zavrseno {
+  background-color: #d1fae5;
+  color: #047857;
+  border: 1.5px solid #10b981;
 }
-
-[data-theme="dark"] .orderStatus.delivered {
-  background-color: rgba(16, 185, 129, 0.2);
+[data-theme="dark"] .orderStatus.zavrseno {
+  background-color: rgba(16, 185, 129, 0.18);
   color: #34d399;
+  border: 1.5px solid #10b981;
 }
-
-.orderStatus.processing {
-  background-color: #fef3c7;
-  color: #d97706;
+.orderStatus.uIzradi {
+  background-color: #fef9c3;
+  color: #b45309;
+  border: 1.5px solid #fbbf24;
 }
-
-[data-theme="dark"] .orderStatus.processing {
-  background-color: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+[data-theme="dark"] .orderStatus.uIzradi {
+  background-color: rgba(251, 191, 36, 0.18);
+  color: #fde68a;
+  border: 1.5px solid #fbbf24;
 }
-
-.orderStatus.completed {
-  background-color: #dcfce7;
-  color: #16a34a;
+.orderStatus.odbijen {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1.5px solid #ef4444;
 }
-[data-theme="dark"] .orderStatus.completed {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: #34d399;
+[data-theme="dark"] .orderStatus.odbijen {
+  background-color: rgba(239, 68, 68, 0.18);
+  color: #f87171;
+  border: 1.5px solid #ef4444;
 }
 .orderDate,
 .orderAmount {

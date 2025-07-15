@@ -69,7 +69,7 @@ export default function ContactSection() {
               <div>
                 <h4 className={styles.infoLabel}>Adresa</h4>
                 <p className={styles.infoText}>
-                  Bulevar Kralja Aleksandra 73<br />11000 Beograd, Srbija
+                  Donja Lovnica bb<br />72220 Zavidovići, Bosna i Hercegovina
                 </p>
               </div>
             </div>
@@ -78,7 +78,7 @@ export default function ContactSection() {
               <div>
                 <h4 className={styles.infoLabel}>Telefon</h4>
                 <p className={styles.infoText}>
-                  +381 11 123 4567<br />+381 64 123 4567
+                  +387 62 118 125
                 </p>
               </div>
             </div>
@@ -87,7 +87,7 @@ export default function ContactSection() {
               <div>
                 <h4 className={styles.infoLabel}>Email</h4>
                 <p className={styles.infoText}>
-                  info@eurosystem.rs<br />podrska@eurosystem.rs
+                  eurosystemor@gmail.com
                 </p>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function ContactSection() {
             <div className={styles.map}>
               <div className={styles.mapPlaceholder}>
                 <MapPin size={48} />
-                <p>Mapa lokacije</p>
+                <p>Donja Lovnica bb, Zavidovići</p>
               </div>
             </div>
           </div>

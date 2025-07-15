@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Header from "../../components/Header/Header";
-import Footer from "../../components/Footer/Footer";
 import styles from "../Blog.module.css";
 import { MessageCircle, User, Calendar, X, LogIn, UserPlus } from "lucide-react";
 
@@ -117,8 +116,8 @@ export default function BlogDetailPage() {
     return date.toLocaleDateString("sr-Latn-RS", { day: "2-digit", month: "long", year: "numeric" });
   };
 
-  if (loading) return <div className={styles.page}><Header /><main className={styles.main}><p>Učitavanje...</p></main><Footer /></div>;
-  if (!blog) return <div className={styles.page}><Header /><main className={styles.main}><p>Blog nije pronađen.</p></main><Footer /></div>;
+  if (loading) return <div className={styles.page}><Header /><main className={styles.main}><p>Učitavanje...</p></main></div>;
+  if (!blog) return <div className={styles.page}><Header /><main className={styles.main}><p>Blog nije pronađen.</p></main></div>;
 
   return (
     <div className={styles.page}>
@@ -205,7 +204,6 @@ export default function BlogDetailPage() {
           </section>
         </div>
       </main>
-      <Footer />
 
       {/* MODAL za login/registraciju */}
       {showModal && (

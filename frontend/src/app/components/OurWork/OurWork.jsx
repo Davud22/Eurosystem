@@ -37,7 +37,7 @@ export default function OurWork() {
           {
             id: 2,
             title: "Poslovni kompleks - Delta City",
-            description: "Napredni sistem kontrole pristupa i video nadzora za trgovinski centar",
+            description: "Napredni sistem kontrole pristupa i video nadzora za trgovački centar",
             category: "Alarmni sistemi",
             images: ["/placeholder.svg?height=300&width=400"],
             created_at: new Date().toISOString(),
@@ -45,7 +45,7 @@ export default function OurWork() {
           {
             id: 3,
             title: "Pametna kuća - Zemun",
-            description: "Potpuna automatizacija kuće sa pametnim osvetljenjem i klimatizacijom",
+            description: "Potpuna automatizacija kuće sa pametnim osvjetljenjem i klimatizacijom",
             category: "Klima uređaji",
             images: ["/placeholder.svg?height=300&width=400"],
             created_at: new Date().toISOString(),
@@ -87,7 +87,7 @@ export default function OurWork() {
         <div className={styles.container}>
           <div className={styles.header}>
             <h2 className={styles.title}>Naši radovi</h2>
-            <p className={styles.description}>Pogledajte neke od naših najuspešnijih projekata</p>
+            <p className={styles.description}>Pogledajte neke od naših najuspješnijih projekata i realizacija</p>
           </div>
           <div className={styles.loading}>
             <p>Učitavanje projekata...</p>
@@ -103,7 +103,7 @@ export default function OurWork() {
         <div className={styles.container}>
           <div className={styles.header}>
             <h2 className={styles.title}>Naši radovi</h2>
-            <p className={styles.description}>Pogledajte neke od naših najuspešnijih projekata</p>
+            <p className={styles.description}>Pogledajte neke od naših najuspješnijih projekata i realizacija</p>
           </div>
           <div className={styles.error}>
             <p>Greška pri učitavanju projekata. Molimo pokušajte ponovo.</p>
@@ -118,7 +118,7 @@ export default function OurWork() {
       <div className={styles.container}>
         <div className={styles.header}>
           <h2 className={styles.title}>Naši radovi</h2>
-          <p className={styles.description}>Pogledajte neke od naših najuspešnijih projekata</p>
+          <p className={styles.description}>Pogledajte neke od naših najuspješnijih projekata i realizacija</p>
         </div>
 
         {projects.length > 0 && (
